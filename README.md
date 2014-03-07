@@ -1,4 +1,4 @@
-Si.FTP
+Cp.FTP
 ======
 
 A simple FTP server-client application written in C++
