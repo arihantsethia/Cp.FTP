@@ -20,7 +20,7 @@ void FTPClient::start(){
 	std::cout<<"Connecting to Host : "<< host<< " Port : "<<port<<std::endl;
 
 	try{
-		control_socket = new ClientSocket(host,port);
+		control_socket = new ControlSocket(host,port);
 		*control_socket>>response;
 		std::cout<<FTPResponse(response).parseResponse();
 

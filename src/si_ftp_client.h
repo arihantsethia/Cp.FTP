@@ -20,8 +20,8 @@
 
 #include "si_ftp_request.h"
 #include "si_ftp_response.h"
-#include "server_socket.h"
-#include "client_socket.h"
+#include "data_socket.h"
+#include "control_socket.h"
 #include "socket_exception.h"
 
 class FTPClient{
@@ -32,8 +32,8 @@ private:
 	int ip;
 	int port;
 
-	ClientSocket *control_socket;
-	ServerSocket *data_socket;
+	ControlSocket *control_socket;
+	DataSocket *data_socket;
 	std::string request;
 	std::string response;
 

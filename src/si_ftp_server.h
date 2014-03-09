@@ -18,13 +18,13 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include "server_socket.h"
-#include "client_socket.h"
+#include "data_socket.h"
+#include "control_socket.h"
 #include "socket_exception.h"
 
 class FTPServer{
 private:
-	void connect(ServerSocket *);
+	void connect(DataSocket *);
 
 public:
 	FTPServer(int);
