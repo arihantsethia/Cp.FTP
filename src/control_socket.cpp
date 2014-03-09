@@ -60,7 +60,6 @@ void ControlSocket::close(){
 	}
 }
 
-
 int ControlSocket::hostlookup(std::string h){
 	const char *host = h.c_str();
 	struct sockaddr_in inaddr;

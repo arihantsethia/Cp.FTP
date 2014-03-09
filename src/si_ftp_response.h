@@ -17,14 +17,12 @@ private:
 	void setResponse(std::string);
 
 public:
-
 	FTPResponse();
 	FTPResponse(std::string response);
 	~FTPResponse();
 	std::string parseResponse();
 	std::string parseResponse(int&);
 	int getPort();
-
 };
 
 #endif

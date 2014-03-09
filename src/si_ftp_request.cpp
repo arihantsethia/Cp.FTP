@@ -15,7 +15,26 @@ FTPRequest::FTPRequest(std::string cmd) {
 
 FTPRequest::FTPRequest(std::string cmd, std::string arg) {
 	_cmd = cmd;
-	_arg =  arg;
+	_arg =  " "+arg;
+}
+
+FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags) {
+	_cmd = cmd;
+	_arg = "";
+	for(int i=0;i<flags.size();i++){
+		_arg += " " + flags[i];
+	}
+}
+
+FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags, vector<std::string> args) {
+	_cmd = cmd;
+	_arg = "";
+	for(int i=0;i<flags.size();i++){
+		_arg += " " + flags[i];
+	}
+	for(int i=0;i<args.size();i++){
+		_arg += " " + args[i];
+	}
 }
 
 void FTPRequest::setRequest(std::string cmd) {
@@ -25,7 +44,26 @@ void FTPRequest::setRequest(std::string cmd) {
 
 void FTPRequest::setRequest(std::string cmd, std::string arg) {
 	_cmd = cmd;
-	_arg =  arg;
+	_arg =  " "+arg;
+}
+
+void FTPRequest::setRequest(std::string cmd, vector<std::string> flags) {
+	_cmd = cmd;
+	_arg = "";
+	for(int i=0;i<flags.size();i++){
+		_arg += " " + flags[i];
+	}
+}
+
+void FTPRequest::setRequest(std::string cmd, vector<std::string> flags, vector<std::string> args) {
+	_cmd = cmd;
+	_arg = "";
+	for(int i=0;i<flags.size();i++){
+		_arg += " " + flags[i];
+	}
+	for(int i=0;i<args.size();i++){
+		_arg += " " + args[i];
+	}
 }
 
 
@@ -50,6 +88,6 @@ std::string FTPRequest::getRequest() {
 		return _cmd+" "+arg.str()+"\r\n";
 	}
 	else{
-		return _cmd + " " + _arg + "\r\n";
+		return _cmd + _arg + "\r\n";
 	}
 }

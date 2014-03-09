@@ -5,7 +5,9 @@
 #include "socket_exception.h"
 
 class ControlSocket : private Socket{
+private:
 	int hostlookup(std::string);
+	
 public:
 	ControlSocket();
 	ControlSocket(int, int);

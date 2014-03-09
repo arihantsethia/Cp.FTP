@@ -59,7 +59,6 @@ void  DataSocket::close(){
 	}
 }
 
-
 int DataSocket::hostlookup(std::string h){
 	const char *host = h.c_str();
 	struct sockaddr_in inaddr;

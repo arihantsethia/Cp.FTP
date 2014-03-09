@@ -18,11 +18,11 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include "si_ftp_request.h"
-#include "si_ftp_response.h"
 #include "data_socket.h"
 #include "control_socket.h"
 #include "socket_exception.h"
+#include "si_ftp_request.h"
+#include "si_ftp_response.h"
 
 class FTPClient{
 private:
@@ -41,32 +41,21 @@ private:
 	void pasv();
 	void get();
 	void put();
-	void cd();
-	void pwd();
-	void ls();
-	void _cd();
-	void _pwd();
-	void _ls();
+	void cd(std::vector<std::string>, std::vector<std::string>);
+	void pwd(std::vector<std::string>);
+	void ls(std::vector<std::string>, std::vector<std::string>);
+	void _cd(std::vector<std::string>, std::vector<std::string>);
+	void _pwd(std::vector<std::string>);
+	void _ls(std::vector<std::string>, std::vector<std::string>);
 	bool quit();
+
+	std::string parseCommand(std::string command, std::vector<std::string>&, std::vector<std::string>&);
 
 public:
 	FTPClient(std::string, int, std::string, std::string);
 	~FTPClient();
-
 	void start();
 	void communicate();
-
-	/*
-	ftp>put filename to upload a file named filename to the server, 
-	ftp>get filename to download a file named filename from the server, 
-	ftp>ls to list the files under the present directory of the server, 
-	ftp>cd to change the present working directory of the server, 
-	ftp>pwd to display the present working directory of the server 
-	ftp>!ls to list the files under the present directory of the client, 
-	ftp>!cd to change the present directory of the client, 
-	ftp>!pwd to display the present working directory of the client, 
-	ftp>quit to quit from ftp session and return to Unix prompt. 
-	*/
 };
 
 #endif

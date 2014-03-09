@@ -19,6 +19,7 @@ private:
 	int _sockfd;
 	struct sockaddr_in _addr;
 	bool is_valid();
+	
 public:
 	Socket();
 	~Socket();

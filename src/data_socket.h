@@ -5,7 +5,9 @@
 #include "socket_exception.h"
 
 class DataSocket : private Socket{
+private:
 	int hostlookup(std::string);
+	
 public:
 	DataSocket();
 	DataSocket(std::string,int);
