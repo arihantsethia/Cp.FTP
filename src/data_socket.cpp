@@ -10,16 +10,12 @@ DataSocket::DataSocket(){
 }
 
 //Constructor function to create, bind and listen a socket on a particular PORT
-DataSocket::DataSocket(int port){
+DataSocket::DataSocket(std::string host, int port){
 	if(!Socket::create()){
 		throw SocketException(strerror(errno));
 	}
-
-	if(!Socket::bind(port)){
-		throw SocketException(strerror(errno));
-	}
-
-	if(!Socket::listen()){
+	int ip = hostlookup(host);
+	if(!Socket::connect(ip,port)){
 		throw SocketException(strerror(errno));
 	}
 }
@@ -63,3 +59,27 @@ void  DataSocket::close(){
 	}
 }
 
+
+int DataSocket::hostlookup(std::string h){
+	const char *host = h.c_str();
+	struct sockaddr_in inaddr;
+	struct hostent *hostp;
+
+	if ((host == NULL) || (*host == '\0')){
+		return(INADDR_ANY);
+	}
+
+	memset ((char * ) &inaddr, 0, sizeof inaddr);
+
+	if ((int)(inaddr.sin_addr.s_addr = inet_addr(host)) == -1){
+		if ((hostp = gethostbyname(host)) == NULL){
+			throw SocketException(strerror(errno));
+		}
+		if (hostp->h_addrtype != AF_INET){ 
+			errno = EPROTOTYPE;
+			throw SocketException(strerror(errno));
+		}
+		memcpy((char * ) &inaddr.sin_addr, (char * ) hostp->h_addr, sizeof(inaddr.sin_addr));
+	}
+	return(inaddr.sin_addr.s_addr);
+}

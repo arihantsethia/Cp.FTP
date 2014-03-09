@@ -32,6 +32,7 @@ public:
 	bool close();
 	int fd();
 	void fd(int);
+	int port();
 };
 
 #endif

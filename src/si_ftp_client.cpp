@@ -7,7 +7,6 @@ FTPClient::FTPClient(std::string host_name, int port_number, std::string user_na
 	user = user_name;
 	passwd = password;
 	port = port_number;
-
 }
 
 
@@ -50,6 +49,7 @@ void FTPClient::communicate(){
 			pwd();
 		}
 		else if(command=="ls"){
+			pasv();
 			ls();
 		}
 		else if(command=="quit"){
@@ -69,11 +69,26 @@ void FTPClient::communicate(){
 
 void FTPClient::get(){
 
-
 }
 
 void FTPClient::put(){
 
+}
+
+
+void FTPClient::pasv(){
+	request = FTPRequest("PASV").getRequest();
+	try{
+		*control_socket<<request;		
+		*control_socket>>response;
+		FTPResponse ftp_response(response);
+		std::cout<<ftp_response.parseResponse();
+		int port = ftp_response.getPort();
+		data_socket = new DataSocket(host,port);
+	} catch(SocketException &e){
+		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+		return;
+	}
 }
 
 bool FTPClient::quit(){
@@ -117,7 +132,7 @@ void FTPClient::ls(){
 	request = FTPRequest("LIST").getRequest();
 	try{
 		*control_socket<<request;		
-		*control_socket>>response;
+		*data_socket>>response;
 		std::cout<<FTPResponse(response).parseResponse();
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;

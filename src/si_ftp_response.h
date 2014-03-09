@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <cstdlib>
+#include <iostream>
 
 using namespace std;
 
@@ -22,6 +23,7 @@ public:
 	~FTPResponse();
 	std::string parseResponse();
 	std::string parseResponse(int&);
+	int getPort();
 
 };
 

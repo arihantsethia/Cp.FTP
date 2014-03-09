@@ -38,6 +38,7 @@ private:
 	std::string response;
 
 	void help();
+	void pasv();
 	void get();
 	void put();
 	void cd();

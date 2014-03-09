@@ -25,6 +25,13 @@ int Socket::fd(){
 	return _sockfd;
 }
 
+int Socket::port(){
+	struct sockaddr_in local_address;
+	socklen_t address_length = sizeof(local_address);
+	getsockname(_sockfd, (struct sockaddr*)&local_address, &address_length);
+	return ntohs(local_address.sin_port);
+}
+
 //Allows to set _sockfd
 void Socket::fd(int _fd){
 	_sockfd = _fd;
