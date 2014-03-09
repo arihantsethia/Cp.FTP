@@ -16,6 +16,18 @@ ClientSocket::ClientSocket(int ip, int port){
 	}
 }
 
+//Constructor function to create and connect a socket to particular IP and PORT
+ClientSocket::ClientSocket(std::string ip_address, int port){
+	if(!Socket::create()){
+		throw SocketException(strerror(errno));
+	}
+	int ip = hostlookup(ip_address);
+	if(!Socket::connect(ip,port)){
+		throw SocketException(strerror(errno));
+	}
+}
+
+
 ClientSocket::~ClientSocket(){
 	Socket::close();
 }
@@ -46,4 +58,29 @@ void ClientSocket::close(){
 	if(!Socket::close()){
 		throw SocketException(strerror(errno));
 	}
+}
+
+
+int ClientSocket::hostlookup(std::string h){
+	const char *host = h.c_str();
+	struct sockaddr_in inaddr;
+	struct hostent *hostp;
+
+	if ((host == NULL) || (*host == '\0')){
+		return(INADDR_ANY);
+	}
+
+	memset ((char * ) &inaddr, 0, sizeof inaddr);
+
+	if ((int)(inaddr.sin_addr.s_addr = inet_addr(host)) == -1){
+		if ((hostp = gethostbyname(host)) == NULL){
+			throw SocketException(strerror(errno));
+		}
+		if (hostp->h_addrtype != AF_INET){ 
+			errno = EPROTOTYPE;
+			throw SocketException(strerror(errno));
+		}
+		memcpy((char * ) &inaddr.sin_addr, (char * ) hostp->h_addr, sizeof(inaddr.sin_addr));
+	}
+	return(inaddr.sin_addr.s_addr);
 }

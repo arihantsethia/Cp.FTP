@@ -1,11 +1,19 @@
-#include "cp_proxy.h"
+#include "si_ftp_client.h"
 
 int main(int argc, char* argv[]){
-	if(argc!=2){
-		std::cerr << "Usage: " << argv[0] << " port" << std::endl;
-		return	1;
+	/*
+	int port = atoi(argv[2]);
+	if(argc==2){
+		FTPServer server();
+		server.start();
 	}
-	int port = atoi(argv[1]);
-	
+	*/
+	if(argc==5 || 1){
+		FTPClient client("127.0.0.1", 21, "arihant", "Arihant_2537");
+		//FTPClient client();
+		client.start();
+		client.communicate();
+	}
+		
 	return 0;
 }

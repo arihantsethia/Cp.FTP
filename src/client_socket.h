@@ -5,9 +5,11 @@
 #include "socket_exception.h"
 
 class ClientSocket : private Socket{
+	int hostlookup(std::string);
 public:
 	ClientSocket();
-	ClientSocket(int ip, int port);
+	ClientSocket(int, int);
+	ClientSocket(std::string, int);
 	~ClientSocket();
 	ClientSocket& operator << (std::string&);
 	ClientSocket& operator >> (std::string&);
