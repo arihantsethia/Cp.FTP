@@ -5,15 +5,18 @@ FTPResponse::FTPResponse() {
 }
 
 FTPResponse::~FTPResponse(){
-	
+	_msg = "";
+	status_code = "";
 }
 
 FTPResponse::FTPResponse(std::string response) {
 	_msg = response;
+	status_code = "";
 }
 
 void FTPResponse::setResponse(std::string response) {
 	_msg = response;
+	status_code = "";
 }
 
 std::string FTPResponse::parseResponse() {
@@ -30,6 +33,12 @@ std::string FTPResponse::parseResponse(int& code) {
 	std::string response = parseResponse();
 	code = atoi(status_code.c_str());
 	return response;
+}
+
+int FTPResponse::returnCode() {
+	if(status_code == "")
+		std::string response = parseResponse();
+	return atoi(status_code.c_str());
 }
 
 int FTPResponse::getPort() {
@@ -51,4 +60,13 @@ int FTPResponse::getPort() {
 	int port = 256 * atoi(port_string.substr(0,beginPos).c_str());
 	port += atoi(port_string.substr(beginPos+1).c_str());
 	return port;
+}
+
+long FTPResponse::fileSize() {
+	std::string::size_type beginPos = _msg.find_last_of("(");
+	std::string::size_type endPos = _msg.find_first_of(")",beginPos);
+	std::string size_string = _msg.substr(beginPos+1,endPos-beginPos-1);
+	beginPos = size_string.find(" ", 0);
+	std::string size=size_string.substr(0,beginPos+1);
+	return atol(size.c_str());
 }

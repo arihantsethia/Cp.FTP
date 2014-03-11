@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -32,24 +33,29 @@ private:
 	int ip;
 	int port;
 
+	int return_code;
 	ControlSocket *control_socket;
 	DataSocket *data_socket;
 	std::string request;
 	std::string response;
+	FTPResponse ftp_response;
 
 	void help();
-	void pasv();
-	void get();
-	void put();
-	void cd(std::vector<std::string>, std::vector<std::string>);
-	void pwd(std::vector<std::string>);
-	void ls(std::vector<std::string>, std::vector<std::string>);
-	void _cd(std::vector<std::string>, std::vector<std::string>);
-	void _pwd(std::vector<std::string>);
-	void _ls(std::vector<std::string>, std::vector<std::string>);
+	void get(std::string);
+	void put(std::string);
+	void _cd(std::string, bool print = true);
+	void _pwd(std::vector<std::string>, bool print = true);
+	void _ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
+	void ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
+	std::string pwd(std::vector<std::string>, bool print = true);
+	int mkd(std::string, bool print= false);
+	int cd(std::string, bool print = true);
+	int pasv();
 	bool quit();
 
-	std::string parseCommand(std::string command, std::vector<std::string>&, std::vector<std::string>&);
+	std::string parseCommand(std::string, std::vector<std::string>&, std::vector<std::string>&);
+	std::string getFileName(std::string);
+	std::vector<std::string> tokenize(std::string, std::string);
 
 public:
 	FTPClient(std::string, int, std::string, std::string);

@@ -13,16 +13,16 @@ class FTPResponse {
 private:
 	std::string _msg;
 	std::string status_code;
-
-	void setResponse(std::string);
-
 public:
 	FTPResponse();
 	FTPResponse(std::string response);
-	~FTPResponse();
+	~FTPResponse();	
+	void setResponse(std::string);
+	int returnCode();
 	std::string parseResponse();
 	std::string parseResponse(int&);
 	int getPort();
+	long fileSize();
 };
 
 #endif

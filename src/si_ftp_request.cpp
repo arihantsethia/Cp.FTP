@@ -66,10 +66,9 @@ void FTPRequest::setRequest(std::string cmd, vector<std::string> flags, vector<s
 	}
 }
 
-
-std::string FTPRequest::getRequest() {
+std::string FTPRequest::getRequest(std::string terminator) {
 	if(_arg == "")	{
-		return _cmd + "\r\n";
+		return _cmd + terminator;
 	}
 	else if(_cmd == "PORT"){
 		std::stringstream arg;
@@ -85,9 +84,13 @@ std::string FTPRequest::getRequest() {
 				arg<<_cmd[i];
 			}
 		}
-		return _cmd+" "+arg.str()+"\r\n";
+		return _cmd+" "+arg.str()+terminator;
 	}
 	else{
-		return _cmd + _arg + "\r\n";
+		return _cmd + _arg + terminator;
 	}
+}
+
+std::string FTPRequest::getRequest() {
+	return getRequest("\r\n");
 }

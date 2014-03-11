@@ -26,7 +26,7 @@ public:
 	FTPRequest(std::string, vector<std::string>, vector<std::string>);
 	~FTPRequest();
 	std::string getRequest();
-
+	std::string getRequest(std::string);
 };
 
 #endif

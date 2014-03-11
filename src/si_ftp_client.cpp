@@ -41,18 +41,74 @@ void FTPClient::communicate(){
 	std::vector<std::string> flags,args;
 
 	while(1){
-		std::cout<<"SiFTP > ";
+		flags.clear();
+		args.clear();
+		std::cout<<"Cp.FTP > ";
 		std::getline(std::cin,command);
 		cmd = parseCommand(command,flags,args);
-		if(cmd=="pwd" && args.size() == 0){
+		if(cmd=="get" && (args.size() == 1 || args.size()==2) && flags.size()==0){
+			//std::string curr_loc = _pwd(flags,false);
+			if(args.size()==2){
+				_cd(args[1],false);/*
+				if(_cd(args[1],false)!= 250){
+					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+					continue;
+				}*/
+			}	
+			get(args[0]);
+			//_cd(curr_loc);
+			_pwd(flags);
+		}
+		else if(cmd=="put" && (args.size() == 1 || args.size()==2) && flags.size()==0){
+			std::string curr_loc = pwd(flags,false);
+			if(args.size()==2){
+				if(cd(args[1],false)!= 250){
+					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+					continue;
+				}
+			}	
+			put(args[0]);
+			cd(curr_loc,false);
+		}
+		else if(cmd=="pwd" && args.size() == 0){
 			pwd(flags);
 		}
-		else if(cmd=="cd"){
-			cd(flags,args);
+		else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
+			/*if(args.size() == 0){
+				cd("");
+			}
+			else{
+				cd(args[0]);
+			}*/
+			cd(args[0]);
 		}
 		else if(cmd=="ls"){
-			pasv();
+			if(pasv()!=227){
+				std::cout<<"Couldn't get file listing."<<std::endl;
+				continue;
+			}
 			ls(flags,args);
+		}
+		else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
+			std::string curr_loc = pwd(flags,false);
+			std::vector<string> dirs = tokenize(args[0],"/");
+			for(int i=0;i<dirs.size();i++){
+				if(mkd(dirs[i],false)!=257 || cd(dirs[i],false) != 250){
+					std::cout<<"Couldn't create the required directory structure."<<std::endl;
+					continue;
+				}				
+			}
+			cd(curr_loc,false);
+			std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
+		}
+		else if(cmd=="!pwd" && args.size() == 0){
+			_pwd(flags);
+		}
+		else if(cmd=="!cd" && flags.size() == 0 && args.size() == 1){
+			_cd(args[0]);
+		}
+		else if(cmd=="!ls"){
+			_ls(flags,args);
 		}
 		else if(cmd=="quit"){
 			if(quit()){
@@ -65,16 +121,170 @@ void FTPClient::communicate(){
 		else if(cmd=="help" || 1){
 			help();
 		}
-		flags.clear();
-		args.clear();
 	}
 }
 
-void FTPClient::get(){
+void FTPClient::get(std::string args){
+	std::cout<<args<<std::endl;
+	std::ofstream out(getFileName(args).c_str(), std::ios::out| std::ios::binary);
+	if(out){
+		request =  FTPRequest("TYPE","I").getRequest();
+		long length= 0;
+		try{
+			*control_socket<<request;
+			*control_socket>>response;
+			ftp_response.setResponse(response);
+			std::cout<<ftp_response.parseResponse(return_code);
+			if(return_code != 200){
+				return;
+			}
+		} catch(SocketException &e){
+			std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+			return;
+		}
 
+		if(pasv()!=227){
+			std::cout<<"File Transfer couldn't be initiated."<<std::endl;
+			return;
+		}
+		
+		request =  FTPRequest("RETR",getFileName(args)).getRequest();
+		try{
+			*control_socket<<request;
+			*control_socket>>response;
+			ftp_response.setResponse(response);
+			std::cout<<ftp_response.parseResponse(return_code);
+			length = ftp_response.fileSize(); 
+			if(return_code != 150){
+				return;
+			}
+		} catch(SocketException &e){
+			std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+			return;
+		}
+		std::cout<<"Receiving File : "<<getFileName(args)<<" ...."<<std::endl;
+		string data;
+		double c_length=length;
+		while (length > 0){
+			*data_socket>>data;
+			length = length - data.length();
+			out<< data;
+		}
+		(*data_socket).close();
+		*control_socket>>response;
+		out.close();
+		int status_code,precision;
+		FTPResponse ftp_response(response);
+		std::cout<<ftp_response.parseResponse(status_code);
+		if(status_code == 226){
+			std::string size_msg = "bytes";
+			precision = 0;
+			if(c_length/1024 >= 1){
+				size_msg = "KB";
+				c_length /= 1024;
+				precision = 2;
+
+				if(c_length/1024 >= 1){
+					size_msg="MB";
+					c_length /= 1024;
+
+					if(c_length/1024 >= 1){
+						size_msg="GB";
+						c_length /= 1024;
+					}
+				}
+			}
+			std::cout<<std::setprecision(precision)<<std::fixed<<"Succefully transferred file : "<<getFileName(args)<< " ( " << c_length <<size_msg<< " )"<<std::endl;
+		}
+	}else{
+		std::cout<<"File : "<<getFileName(args)<<" couldn't be created."<<std::endl;
+	}
 }
 
-void FTPClient::put(){
+void FTPClient::put(std::string args){
+
+	std::ifstream in(args.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+	
+	if(in){
+		long length = in.tellg();
+		in.seekg (0, in.beg);
+		request =  FTPRequest("TYPE","I").getRequest();
+		try{
+			*control_socket<<request;
+			*control_socket>>response;
+			ftp_response.setResponse(response);
+			std::cout<<ftp_response.parseResponse(return_code);
+			if(return_code != 200){
+				return;
+			}
+		} catch(SocketException &e){
+			std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+			return;
+		}
+
+		if(pasv()!=227){
+			std::cout<<"File Transfer couldn't be initiated."<<std::endl;
+			return;
+		}
+		
+		request =  FTPRequest("STOR",getFileName(args)).getRequest();
+		try{
+			*control_socket<<request;
+			*control_socket>>response;
+			ftp_response.setResponse(response);
+			std::cout<<ftp_response.parseResponse(return_code);
+			if(return_code != 150){
+				return;
+			}
+		} catch(SocketException &e){
+			std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+			return;
+		}
+
+		std::cout<<"Sending File : "<<getFileName(args)<<" ...."<<std::endl;
+		string data;
+		std::streampos pos;
+
+		double c_length=length;
+		
+		while (length>0){
+			int read_sz = MAXRECV<length ? MAXRECV : length;
+			char buf[MAXRECV+1];
+			in.read(buf,read_sz);
+			data.assign(buf,read_sz);
+			*data_socket<<data;
+			length -= read_sz;
+		}
+
+		(*data_socket).close();
+		*control_socket>>response;
+		in.close();
+		int status_code,precision;
+		FTPResponse ftp_response(response);
+		std::cout<<ftp_response.parseResponse(status_code);
+		if(status_code == 226){
+			std::string size_msg = "bytes";
+			precision = 0;
+			if(c_length/1024 >= 1){
+				size_msg = "KB";
+				c_length /= 1024;
+				precision = 2;
+
+				if(c_length/1024 >= 1){
+					size_msg="MB";
+					c_length /= 1024;
+
+					if(c_length/1024 >= 1){
+						size_msg="GB";
+						c_length /= 1024;
+					}
+				}
+			}
+			std::cout<<std::setprecision(precision)<<std::fixed<<"Succefully transferred file : "<<getFileName(args)<< " ( " << c_length <<size_msg<< " )"<<std::endl;
+		}
+	}else{
+		std::cout<<"File : "<<getFileName(args)<<" doesn't exist. Please check the filename."<<std::endl;
+	}
 
 }
 
@@ -92,102 +302,141 @@ bool FTPClient::quit(){
 	return true;
 }
 
-void FTPClient::pasv(){
+int FTPClient::pasv(){
 	request = FTPRequest("PASV").getRequest();
 
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
 		FTPResponse ftp_response(response);
-		std::cout<<ftp_response.parseResponse();
+		ftp_response.setResponse(response);
+		std::cout<<ftp_response.parseResponse(return_code);
+		if(return_code != 227){
+			return return_code;
+		}
 		int port = ftp_response.getPort();
 		data_socket = new DataSocket(host,port);
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return;
+		return -1;
 	}
+	return return_code;
 }
 
-void FTPClient::pwd(std::vector<std::string> flags){
+std::string FTPClient::pwd(std::vector<std::string> flags, bool print){
 	request = FTPRequest("PWD",flags).getRequest();
 
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
+		ftp_response.setResponse(response);		
+		std::string p_response = ftp_response.parseResponse(return_code);
+		if(print){
+			std::cout<<p_response;
+		}
+		return p_response.substr(1,p_response.length()-4);
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return ;
+		return "" ;
 	}
 }
 
-void FTPClient::cd(std::vector<std::string> flags, std::vector<std::string> args){
-	request = FTPRequest("CWD",flags,args).getRequest();
+int FTPClient::cd(std::string args,bool print){
+	request = FTPRequest("CWD",args).getRequest();
 
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
+		ftp_response.setResponse(response);
+		if(print){
+			std::cout<<ftp_response.parseResponse(return_code);
+		}
+		return ftp_response.returnCode();
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return ;
+		return -1;
 	}
 }
 
-void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args){
+int FTPClient::mkd(std::string args,bool print){
+	request = FTPRequest("MKD",args).getRequest();
+
+	try{
+		*control_socket<<request;
+		*control_socket>>response;
+		ftp_response.setResponse(response);
+		if(print){
+			std::cout<<ftp_response.parseResponse(return_code);
+		}
+		return ftp_response.returnCode();
+	} catch(SocketException &e){
+		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
+		return -1;
+	}
+}
+
+void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
 	request = FTPRequest("LIST",flags,args).getRequest();
 
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
+		if(print){
+			std::cout<<FTPResponse(response).parseResponse();
+		}
 		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
+		if(print){
+			std::cout<<FTPResponse(response).parseResponse();
+		}
 		*data_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
+		if(print){
+			std::cout<<FTPResponse(response).parseResponse();
+		}
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
 	}
 }
 
-void FTPClient::_pwd(std::vector<std::string> flags){
-	request = FTPRequest("PWD",flags).getRequest();
-
-	try{
+void FTPClient::_pwd(std::vector<std::string> flags, bool print){
+	request = FTPRequest("pwd",flags).getRequest("\n");
+	system(request.c_str());
+	/*try{
 		*control_socket<<request;
 		*control_socket>>response;
 		std::cout<<FTPResponse(response).parseResponse();
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
-	}
+	}*/
 }
 
-void FTPClient::_cd(std::vector<std::string> flags, std::vector<std::string> args){
-	request = FTPRequest("CWD",flags,args).getRequest();
-
-	try{
+void FTPClient::_cd(std::string args, bool print){
+	request = FTPRequest("cd",args).getRequest("\n");
+	std::cout<<request;
+	system(request.c_str());
+	/*try{
 		*control_socket<<request;
 		*control_socket>>response;
 		std::cout<<FTPResponse(response).parseResponse();
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
-	}
+	}*/
 }
 
-void FTPClient::_ls(std::vector<std::string> flags, std::vector<std::string> args){
-	request = FTPRequest("LIST",flags,args).getRequest();
-
-	try{
+void FTPClient::_ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
+	request = FTPRequest("ls",flags,args).getRequest("\n");
+	std::cout<<request;
+	system(request.c_str());
+	/*try{
 		*control_socket<<request;
 		*control_socket>>response;
 		std::cout<<FTPResponse(response).parseResponse();
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
-	}
+	}*/
 }
 
 void FTPClient::help(){
@@ -202,7 +451,7 @@ void FTPClient::help(){
 	cmd_desc += "!cd to change the present directory of the client\n" ;
 	cmd_desc += "!pwd to display the present working directory of the client\n" ;
 	cmd_desc += "quit to quit from ftp session and return to Unix prompt.\n";
-	
+
 	std::cout<<cmd_desc<<std::endl;
 }
 
@@ -210,17 +459,46 @@ std::string FTPClient::parseCommand(std::string command, std::vector<std::string
 	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
 	std::string cmd = command.substr(beginPos,endPos-beginPos);
-
 	while(beginPos!=std::string::npos){
 		beginPos = command.find_first_not_of(" \r\n", endPos);
-		endPos = command.find_first_of(" \r\n",beginPos);
-		if(beginPos!=std::string::npos){
-			if(command[beginPos] == '-'){
-				flags.push_back(command.substr(beginPos,endPos-beginPos));
+		if(beginPos != std::string::npos){
+			endPos = command.find_first_of(" \r\n",beginPos);
+			if(endPos != std::string::npos){
+				if(command[beginPos] == '-'){
+					flags.push_back(command.substr(beginPos,endPos-beginPos));
+				}else{
+					args.push_back(command.substr(beginPos,endPos-beginPos));
+				}
 			}else{
-				args.push_back(command.substr(beginPos,endPos-beginPos));
+				if(command[beginPos] == '-'){
+					flags.push_back(command.substr(beginPos));
+				}else{
+					args.push_back(command.substr(beginPos));
+				}
+				break;
 			}
 		}
 	}
 	return cmd;
+}
+
+std::string FTPClient::getFileName(std::string str){
+	std::string::size_type pos = str.find_last_of("/\\");
+	return str.substr(pos+1);
+}
+
+std::vector<std::string> FTPClient::tokenize(std::string s, std::string sep){
+	// Skip delimiters at beginning.
+	std::string::size_type lastPos = s.find_first_not_of(sep, 0);	
+	// Find first "non-delimiter", which will be between lastPos and pos
+	std::string::size_type pos = s.find_first_of(sep, lastPos); 
+	std::vector<std::string> tokens;
+	while(pos != std::string::npos || lastPos != std::string::npos){
+		tokens.push_back(s.substr(lastPos,(pos - lastPos)));
+		// Skip delimiters
+		lastPos = s.find_first_not_of(sep, pos);	
+		// Find "non-delimiter", which will be between lastPos and pos
+		pos = s.find_first_of(sep, lastPos); 
+	}
+	return tokens;
 }
