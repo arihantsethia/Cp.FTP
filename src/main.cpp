@@ -2,24 +2,33 @@
 #include "utility.h"
 
 int main(int argc, char* argv[]){
-	/*
-	int port = atoi(argv[2]);
 	if(argc==2){
-		FTPServer server();
-		server.start();
+		int port = atoi(argv[1]);
+		//FTPServer server();
+		//server.start();
 	}
-	std::string x;
-	getline(cin,x);
-	//std::cout<<chdir(x.c_str());
-	std::cout<<exec_cmd(x);
-	
-	std::cout<<mkdir("tmp", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);*/
-	if(argc==5 || 1){
-		FTPClient client("127.0.0.1", 21, "arihant", "Arihant_2537");
-		//FTPClient client("10.16.1.44", 21, "vinita", "vini");
-		client.start();
-		client.communicate();
-	}//*/
-		
+	else if(argc==3){
+		std::string host(argv[1]);
+		if(std::count(host.begin(), host.end(), '.') == 3 && is_number(argv[2]) && atoi(argv[2]) < 65536){
+			int port = atoi(argv[2]);
+			std::string user,pass;
+			std::cout<<"Enter User Name : ";
+			std::cin>>user;
+			std::cout<<"Enter Password : ";
+			pass = getPassword();
+			FTPClient client(host, port, user, pass);
+			client.start();
+			client.communicate();
+		}
+		else{
+			std::cout<<"Input incorrectly formatted."<<std::endl;
+			std::cout<<argv[0]<<" [int].[int].[int].[int] [int(1-65536)]"<<std::endl;
+		}
+	}
+	else{
+		std::cout<<"Incorrect usage."<<std::endl;
+		std::cout<<argv[0]<<" [port] : to use is as an ftp-server hosted on [port]"<<std::endl;
+		std::cout<<argv[0]<<" [host] [port] : to connect to ftp-server hosted at host:port"<<std::endl;
+	}		
 	return 0;
 }

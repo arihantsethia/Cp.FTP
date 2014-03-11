@@ -1,7 +1,7 @@
 #include "si_ftp_client.h"
 
 FTPClient::FTPClient(std::string host_name, int port_number, std::string user_name, std::string password){
-	std::cout<<"Si.FTP-Client Started\n";
+	std::cout<<"\nSi.FTP-Client Started\n\n";
 	host = host_name;
 	user = user_name;
 	passwd = password;
@@ -28,8 +28,14 @@ void FTPClient::start(){
 		*control_socket<<request;
 		*control_socket>>response;
 
-		std::cout<<FTPResponse(response).parseResponse();
-
+		std::cout<<FTPResponse(response).parseResponse(return_code);
+		if(return_code != 230){
+			std::cout<<"Re-enter User Name : ";
+			std::cin>>user;
+			std::cout<<"Re-enter Password : ";
+			passwd = getPassword();
+			start();
+		}
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;

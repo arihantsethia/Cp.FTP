@@ -68,3 +68,24 @@ std::vector<std::string> tokenize(std::string s, std::string sep){
 	}
 	return tokens;
 }
+
+std::string getPassword(){
+	termios oldt;
+	tcgetattr(STDIN_FILENO, &oldt);
+	termios newt = oldt;
+	newt.c_lflag &= ~ECHO;
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	std::string pass;
+	getline(std::cin, pass);
+	getline(std::cin, pass);
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	std::cout<<std::endl;
+	return pass;
+}
+
+bool is_number(std::string s) {
+	for(int i=0; i<s.length(); i++)
+		if(!isdigit(s[i]))
+			return false ;
+	return true ;
+}
