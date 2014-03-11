@@ -74,12 +74,6 @@ void FTPClient::communicate(){
 			pwd(flags);
 		}
 		else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
-			/*if(args.size() == 0){
-				cd("");
-			}
-			else{
-				cd(args[0]);
-			}*/
 			cd(args[0]);
 		}
 		else if(cmd=="ls"){
@@ -90,16 +84,20 @@ void FTPClient::communicate(){
 			ls(flags,args);
 		}
 		else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
+			bool flag = true;
 			std::string curr_loc = pwd(flags,false);
 			std::vector<string> dirs = tokenize(args[0],"/");
 			for(int i=0;i<dirs.size();i++){
-				if(mkd(dirs[i],false)!=257 || cd(dirs[i],false) != 250){
+				if(mkd(dirs[i],false)!=257 && cd(dirs[i],false) != 250){
 					std::cout<<"Couldn't create the required directory structure."<<std::endl;
-					continue;
+					flag = false;
+					break;
 				}				
 			}
 			cd(curr_loc,false);
-			std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
+			if(flag){
+				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
+			}
 		}
 		else if(cmd=="!pwd" && args.size() == 0){
 			_pwd(flags);
@@ -110,6 +108,24 @@ void FTPClient::communicate(){
 		else if(cmd=="!ls"){
 			_ls(flags,args);
 		}
+		else if(cmd=="!mkdir" && args.size() == 1 && flags.size() == 0){
+			bool flag = true;
+			std::string curr_loc = _pwd(flags,false);
+			std::vector<string> dirs = tokenize(args[0],"/");
+			for(int i=0;i<dirs.size();i++){
+				int status = _mkd(dirs[i],false);
+				status = status | _cd(dirs[i],false);
+				if(_mkd(dirs[i],false)!=1 && _cd(dirs[i],false) != 1){
+					std::cout<<"Couldn't create the required directory structure."<<std::endl;
+					flag = false;
+					break;
+				}				
+			}
+			_cd(curr_loc,false);
+			if(flag){
+				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
+			}
+		}
 		else if(cmd=="quit"){
 			if(quit()){
 				(*control_socket).close();
@@ -118,8 +134,11 @@ void FTPClient::communicate(){
 				std::cout<<"Couldn't terminate the session."<<std::endl;
 			}
 		}
-		else if(cmd=="help" || 1){
+		else if(cmd=="help"){
 			help();
+		}
+		else{
+			std::cout<<"Command improperly formatted. Type \"help\" for reference."<<std::endl;
 		}
 	}
 }
@@ -398,45 +417,37 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 	}
 }
 
-void FTPClient::_pwd(std::vector<std::string> flags, bool print){
+std::string FTPClient::_pwd(std::vector<std::string> flags, bool print){
 	request = FTPRequest("pwd",flags).getRequest("\n");
-	system(request.c_str());
-	/*try{
-		*control_socket<<request;
-		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
-	} catch(SocketException &e){
-		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return ;
-	}*/
+	response = exec_cmd("pwd",request);
+	if(print){
+		std::cout<<response;
+	}
+	return response.substr(1,response.length()-3);
 }
 
-void FTPClient::_cd(std::string args, bool print){
-	request = FTPRequest("cd",args).getRequest("\n");
-	std::cout<<request;
-	system(request.c_str());
-	/*try{
-		*control_socket<<request;
-		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
-	} catch(SocketException &e){
-		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return ;
-	}*/
+int FTPClient::_cd(std::string args, bool print){
+	response = exec_cmd("cd",args,return_code);
+	if(print){
+		std::cout<<response;
+	}
+	return return_code;
 }
 
 void FTPClient::_ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
 	request = FTPRequest("ls",flags,args).getRequest("\n");
-	std::cout<<request;
-	system(request.c_str());
-	/*try{
-		*control_socket<<request;
-		*control_socket>>response;
-		std::cout<<FTPResponse(response).parseResponse();
-	} catch(SocketException &e){
-		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
-		return ;
-	}*/
+	response = exec_cmd("ls",request);
+	if(print){
+		std::cout<<response;
+	}
+}
+
+int FTPClient::_mkd(std::string args,bool print){
+	response = exec_cmd("mkdir",args,return_code);
+	if(print){
+		std::cout<<response;
+	}
+	return return_code;
 }
 
 void FTPClient::help(){
@@ -480,25 +491,4 @@ std::string FTPClient::parseCommand(std::string command, std::vector<std::string
 		}
 	}
 	return cmd;
-}
-
-std::string FTPClient::getFileName(std::string str){
-	std::string::size_type pos = str.find_last_of("/\\");
-	return str.substr(pos+1);
-}
-
-std::vector<std::string> FTPClient::tokenize(std::string s, std::string sep){
-	// Skip delimiters at beginning.
-	std::string::size_type lastPos = s.find_first_not_of(sep, 0);	
-	// Find first "non-delimiter", which will be between lastPos and pos
-	std::string::size_type pos = s.find_first_of(sep, lastPos); 
-	std::vector<std::string> tokens;
-	while(pos != std::string::npos || lastPos != std::string::npos){
-		tokens.push_back(s.substr(lastPos,(pos - lastPos)));
-		// Skip delimiters
-		lastPos = s.find_first_not_of(sep, pos);	
-		// Find "non-delimiter", which will be between lastPos and pos
-		pos = s.find_first_of(sep, lastPos); 
-	}
-	return tokens;
 }

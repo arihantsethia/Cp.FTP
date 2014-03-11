@@ -24,6 +24,7 @@
 #include "socket_exception.h"
 #include "si_ftp_request.h"
 #include "si_ftp_response.h"
+#include "utility.h"
 
 class FTPClient{
 private:
@@ -43,19 +44,21 @@ private:
 	void help();
 	void get(std::string);
 	void put(std::string);
-	void _cd(std::string, bool print = true);
-	void _pwd(std::vector<std::string>, bool print = true);
+
 	void _ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
 	void ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
+
+	std::string _pwd(std::vector<std::string>, bool print = true);	
 	std::string pwd(std::vector<std::string>, bool print = true);
-	int mkd(std::string, bool print= false);
+	int _cd(std::string, bool print = true);	
 	int cd(std::string, bool print = true);
+
+	int mkd(std::string, bool print= false);
+	int _mkd(std::string, bool print= false);
 	int pasv();
 	bool quit();
 
 	std::string parseCommand(std::string, std::vector<std::string>&, std::vector<std::string>&);
-	std::string getFileName(std::string);
-	std::vector<std::string> tokenize(std::string, std::string);
 
 public:
 	FTPClient(std::string, int, std::string, std::string);

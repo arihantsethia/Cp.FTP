@@ -1,5 +1,5 @@
-#ifndef SOCKET_CLASS
-#define SOCKET_CLASS
+#ifndef SOCKET_H
+#define SOCKET_H
 
 #include <cstdio>
 #include <cstring>
