@@ -32,6 +32,13 @@ int Socket::port(){
 	return ntohs(local_address.sin_port);
 }
 
+std::string Socket::host(){
+	struct sockaddr_in local_address;
+	socklen_t address_length = sizeof(local_address);
+	getsockname(_sockfd, (struct sockaddr*)&local_address, &address_length);
+	return std::string(inet_ntoa( local_address.sin_addr));
+}
+
 //Allows to set _sockfd
 void Socket::fd(int _fd){
 	_sockfd = _fd;
@@ -124,7 +131,7 @@ int Socket::send(std::string msg){
 		return -1;
 	}
 	
-	return ::send(_sockfd, msg.c_str(), msg.length(), MSG_NOSIGNAL); //Set flags to MSG_SIGNAL to IGNORE Broken Pipe Errors.
+	return ::send(_sockfd, msg.c_str(), msg.length(), 0); //Set flags to MSG_SIGNAL to IGNORE Broken Pipe Errors.
 }
 
 //Wrapper function for recv(int s, void *buf, size_t len, int flags);

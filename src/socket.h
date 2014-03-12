@@ -34,6 +34,7 @@ public:
 	int fd();
 	void fd(int);
 	int port();
+	std::string host();
 };
 
 #endif

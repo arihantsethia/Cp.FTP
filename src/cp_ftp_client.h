@@ -2,8 +2,8 @@
 #define SiFTP_Client_H
 
 #include "client_socket.h"
-#include "si_ftp_request.h"
-#include "si_ftp_response.h"
+#include "cp_ftp_request.h"
+#include "cp_ftp_response.h"
 #include "socket_exception.h"
 #include "utility.h"
 

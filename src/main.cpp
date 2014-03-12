@@ -1,11 +1,12 @@
-#include "si_ftp_client.h"
+#include "cp_ftp_client.h"
+#include "cp_ftp_server.h"
 #include "utility.h"
 
 int main(int argc, char* argv[]){
 	if(argc==2){
 		int port = atoi(argv[1]);
-		//FTPServer server();
-		//server.start();
+		FTPServer server(port);
+		server.start();
 	}
 	else if(argc==3){
 		std::string host(argv[1]);

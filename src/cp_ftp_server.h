@@ -22,8 +22,8 @@
 
 #include "server_socket.h"
 #include "socket_exception.h"
-#include "si_ftp_request.h"
-#include "si_ftp_response.h"
+#include "cp_ftp_request.h"
+#include "cp_ftp_response.h"
 #include "utility.h"
 
 typedef std::map<std::string, pair<std::string, std::string> > LoginInfo;

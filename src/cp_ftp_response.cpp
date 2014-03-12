@@ -1,4 +1,4 @@
-#include "si_ftp_response.h"
+#include "cp_ftp_response.h"
 
 FTPResponse::FTPResponse() {
 
