@@ -52,52 +52,63 @@ void FTPClient::communicate(){
 		std::cout<<"Cp.FTP > ";
 		std::getline(std::cin,command);
 		cmd = parseCommand(command,flags,args);
+
 		if(cmd=="get" && (args.size() == 1 || args.size()==2) && flags.size()==0){
-			std::string curr_loc = _pwd(flags,false);
-			std::string curr_loc_server = pwd(flags,false);
+			std::string curr_loc = _pwd(false);
+			std::string curr_loc_server = pwd(false);
+
 			if(args.size()==2){
 				if(_cd(args[1],false)!= 1){
 					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
 					continue;
 				}
 			}
-			if(cd(getFilePath(args[0]),false) != 250){
-				_cd(curr_loc);
-				std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
-				continue;
-			}	
-			get(args[0]);
+
+			std::string filePath = getFilePath(args[0]);
+
+			if(filePath!=""){
+				if(cd(filePath,false) != 250){
+					_cd(curr_loc,false);
+					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+					continue;
+				}
+			}
+
+			get(getFileName(args[0]));
 			cd(curr_loc_server,false);
 			_cd(curr_loc,false);
 		}
 		else if(cmd=="put" && (args.size() == 1 || args.size()==2) && flags.size()==0){
-			std::string curr_loc = pwd(flags,false);
+			std::string curr_loc = pwd(false);
+
 			if(args.size()==2){
 				if(cd(args[1],false)!= 250){
 					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
 					continue;
 				}
-			}	
+			}
+
 			put(args[0]);
 			cd(curr_loc,false);
 		}
-		else if(cmd=="pwd" && args.size() == 0){
-			pwd(flags);
+		else if(cmd=="pwd" && args.size() == 0 && flags.size() == 0){
+			pwd();
 		}
 		else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
 			cd(args[0]);
 		}
-		else if(cmd=="ls"){
+		else if(cmd=="ls"){			
 			if(pasv()!=227){
 				std::cout<<"Couldn't get file listing."<<std::endl;
 				continue;
-			}/**/
+			}
 			ls(flags,args);
 		}
 		else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
 			bool flag = true;
-			std::string curr_loc = pwd(flags,false);
+			std::string curr_loc = pwd(false);
 			std::vector<string> dirs = tokenize(args[0],"/");
+
 			for(int i=0;i<dirs.size();i++){
 				if(mkd(dirs[i],false)!=257 && cd(dirs[i],false) != 250){
 					std::cout<<"Couldn't create the required directory structure."<<std::endl;
@@ -105,13 +116,15 @@ void FTPClient::communicate(){
 					break;
 				}				
 			}
+
 			cd(curr_loc,false);
+
 			if(flag){
 				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
 			}
 		}
-		else if(cmd=="!pwd" && args.size() == 0){
-			_pwd(flags);
+		else if(cmd=="!pwd" && args.size() == 0 && flags.size()==0){
+			_pwd();
 		}
 		else if(cmd=="!cd" && flags.size() == 0 && args.size() == 1){
 			_cd(args[0]);
@@ -121,7 +134,8 @@ void FTPClient::communicate(){
 		}
 		else if(cmd=="!mkdir" && args.size() == 1 && flags.size() == 0){
 			bool flag = true;
-			std::string curr_loc = _pwd(flags,false);
+			std::string curr_loc = _pwd(false);
+
 			std::vector<string> dirs = tokenize(args[0],"/");
 			for(int i=0;i<dirs.size();i++){
 				int status = _mkd(dirs[i],false);
@@ -132,6 +146,7 @@ void FTPClient::communicate(){
 					break;
 				}				
 			}
+
 			_cd(curr_loc,false);
 			if(flag){
 				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
@@ -156,9 +171,10 @@ void FTPClient::communicate(){
 
 void FTPClient::get(std::string args){
 	std::ofstream out(getFileName(args).c_str(), std::ios::out| std::ios::binary);
+	string data;
+	double length;
 	if(out){
 		request =  FTPRequest("TYPE","I").getRequest();
-		long length= 0;
 		try{
 			*control_socket<<request;
 			*control_socket>>response;
@@ -181,9 +197,7 @@ void FTPClient::get(std::string args){
 		try{
 			*control_socket<<request;
 			*control_socket>>response;
-			ftp_response.setResponse(response);
-			std::cout<<ftp_response.parseResponse(return_code);
-			length = ftp_response.fileSize(); 
+			std::cout<<FTPResponse(response).parseResponse(return_code);
 			if(return_code != 150){
 				return;
 			}
@@ -191,39 +205,47 @@ void FTPClient::get(std::string args){
 			std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 			return;
 		}
+
 		std::cout<<"Receiving File : "<<getFileName(args)<<" ...."<<std::endl;
-		string data;
-		double c_length=length;
-		while (length > 0){
+		
+		while (1){
+			data = "";
 			*data_socket>>data;
-			length = length - data.length();
-			out<< data;
+			length = length + data.length();
+			if(data.length()==0){
+				break;
+			}
+			out<<data;
 		}
+
 		(*data_socket).close();
 		*control_socket>>response;
 		out.close();
 		int status_code,precision;
 		FTPResponse ftp_response(response);
 		std::cout<<ftp_response.parseResponse(status_code);
+
 		if(status_code == 226){
 			std::string size_msg = "bytes";
 			precision = 0;
-			if(c_length/1024 >= 1){
+
+			if(length/1024 >= 1){
 				size_msg = "KB";
-				c_length /= 1024;
+				length /= 1024;
 				precision = 2;
 
-				if(c_length/1024 >= 1){
+				if(length/1024 >= 1){
 					size_msg="MB";
-					c_length /= 1024;
+					length /= 1024;
 
-					if(c_length/1024 >= 1){
+					if(length/1024 >= 1){
 						size_msg="GB";
-						c_length /= 1024;
+						length /= 1024;
 					}
 				}
 			}
-			std::cout<<std::setprecision(precision)<<std::fixed<<"Succefully transferred file : "<<getFileName(args)<< " ( " << c_length <<size_msg<< " )"<<std::endl;
+
+			std::cout<<std::setprecision(precision)<<std::fixed<<"Succefully transferred file : "<<getFileName(args)<< " ( " << length <<size_msg<< " )"<<std::endl;
 		}
 	}else{
 		std::cout<<"File : "<<getFileName(args)<<" couldn't be created."<<std::endl;
@@ -231,13 +253,13 @@ void FTPClient::get(std::string args){
 }
 
 void FTPClient::put(std::string args){
-
 	std::ifstream in(args.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 	
 	if(in){
 		long length = in.tellg();
 		in.seekg (0, in.beg);
 		request =  FTPRequest("TYPE","I").getRequest();
+
 		try{
 			*control_socket<<request;
 			*control_socket>>response;
@@ -293,6 +315,7 @@ void FTPClient::put(std::string args){
 		if(status_code == 226){
 			std::string size_msg = "bytes";
 			precision = 0;
+
 			if(c_length/1024 >= 1){
 				size_msg = "KB";
 				c_length /= 1024;
@@ -318,6 +341,7 @@ void FTPClient::put(std::string args){
 
 bool FTPClient::quit(){
 	request = FTPRequest("QUIT").getRequest();
+
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -350,8 +374,8 @@ int FTPClient::pasv(){
 	return return_code;
 }
 
-std::string FTPClient::pwd(std::vector<std::string> flags, bool print){
-	request = FTPRequest("PWD",flags).getRequest();
+std::string FTPClient::pwd( bool print){
+	request = FTPRequest("PWD","").getRequest();
 
 	try{
 		*control_socket<<request;
@@ -416,9 +440,16 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 		if(return_code != 150){
 			return;
 		}
-		*data_socket>>response;
-		if(print){
-			std::cout<<FTPResponse(response).parseResponse();
+
+		while(1){
+			response = "";
+			*data_socket >> response;
+			if(response.length()==0){
+				break;
+			}
+			if(print){
+				std::cout<<response;
+			}																				
 		}
 		(*control_socket)>>response;
 		ftp_response.setResponse(response);
@@ -427,13 +458,14 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 			std::cout<<p_response;
 		}
 	} catch(SocketException &e){
+		(*data_socket).close();
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
 	}
 }
 
-std::string FTPClient::_pwd(std::vector<std::string> flags, bool print){
-	request = FTPRequest("pwd",flags).getRequest("\n");
+std::string FTPClient::_pwd(bool print){
+	request = FTPRequest("pwd","").getRequest("\n");
 	response = exec_cmd("pwd",request);
 	if(print){
 		std::cout<<response;
@@ -468,15 +500,15 @@ int FTPClient::_mkd(std::string args,bool print){
 void FTPClient::help(){
 	string cmd_desc = "";
 
-	cmd_desc += "put filename to upload a file named filename to the server\n" ;
-	cmd_desc += "get filename to download a file named filename from the server\n" ;
-	cmd_desc += "ls to list the files under the present directory of the server\n" ;
-	cmd_desc += "cd to change the present working directory of the server\n" ;
-	cmd_desc += "pwd to display the present working directory of the server\n" ; 
-	cmd_desc += "!ls to list the files under the present directory of the client\n" ;
-	cmd_desc += "!cd to change the present directory of the client\n" ;
-	cmd_desc += "!pwd to display the present working directory of the client\n" ;
-	cmd_desc += "quit to quit from ftp session and return to Unix prompt.\n";
-
+	cmd_desc += "put [sourcepath]filename [destination] : filename to upload the file(relative or absolute address) to the server [at the specified destination].\n" ;
+	cmd_desc += "get [sourcepath]filename [destination] : filename to download the file(relative or absolute address) from the server [at the specified destination].\n" ;
+	cmd_desc += "ls [flags(like -l, -a, etc)] [args1 args2...] : to list the files under the present directory or mentoned directories in args[] of the server.\n" ;
+	cmd_desc += "cd destiation : to change the present working directory of the server to destination.\n" ;
+	cmd_desc += "pwd : to display the present working directory of the server.\n" ; 
+	cmd_desc += "!ls [flags(like -l, -a, etc)] [args1 args2...] : to list the files under the present directory or mentoned directories in args[] of your machine.\n" ;
+	cmd_desc += "!cd destiation : to change the present working directory of your machine to destination.\n" ;
+	cmd_desc += "!pwd : to display the present working directory of your machine.\n" ; 
+	cmd_desc += "quit : to quit from ftp session and return to Unix prompt.\n";
+	
 	std::cout<<cmd_desc<<std::endl;
 }

@@ -70,12 +70,3 @@ int FTPResponse::getPort() {
 	port += atoi(port_string.substr(beginPos+1).c_str());
 	return port;
 }
-
-long FTPResponse::fileSize() {
-	std::string::size_type beginPos = _msg.find_last_of("(");
-	std::string::size_type endPos = _msg.find_first_of(")",beginPos);
-	std::string size_string = _msg.substr(beginPos+1,endPos-beginPos-1);
-	beginPos = size_string.find(" ", 0);
-	std::string size=size_string.substr(0,beginPos+1);
-	return atol(size.c_str());
-}

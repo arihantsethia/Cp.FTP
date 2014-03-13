@@ -38,7 +38,7 @@ private:
 	void add();
 	int ls(std::vector<std::string>, std::vector<std::string>, std::string&, bool print = false);
 	std::string syst(bool print = false);
-	std::string pwd(std::vector<std::string>, bool print = false);
+	std::string pwd(bool print = false);
 	int cd(std::string, bool print = false);
 	int mkd(std::string, std::string&, bool print= false);
 	int pasv();

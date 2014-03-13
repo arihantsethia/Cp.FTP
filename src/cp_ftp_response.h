@@ -24,7 +24,6 @@ public:
 	std::string parseResponse(int&);
 	std::string formResponse();
 	int getPort();
-	long fileSize();
 };
 
 #endif

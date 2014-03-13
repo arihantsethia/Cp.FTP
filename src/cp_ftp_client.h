@@ -29,8 +29,8 @@ private:
 	void _ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
 	void ls(std::vector<std::string>, std::vector<std::string>, bool print = true);
 
-	std::string _pwd(std::vector<std::string>, bool print = true);	
-	std::string pwd(std::vector<std::string>, bool print = true);
+	std::string _pwd(bool print = true);	
+	std::string pwd(bool print = true);
 	int _cd(std::string, bool print = true);	
 	int cd(std::string, bool print = true);
 
