@@ -1,11 +1,11 @@
 #ifndef SiFTP_Client_H
 #define SiFTP_Client_H
 
-#include "client_socket.h"
+#include "../libs/client_socket.h"
+#include "../libs/socket_exception.h"
+#include "../libs/utility.h"
 #include "cp_ftp_request.h"
 #include "cp_ftp_response.h"
-#include "socket_exception.h"
-#include "utility.h"
 
 class FTPClient{
 private:

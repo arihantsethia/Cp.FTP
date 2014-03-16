@@ -1,5 +1,5 @@
 program_NAME := cpftp
-program_CXX_SRCS := $(wildcard src/*.cpp)
+program_CXX_SRCS := $(wildcard src/*.cpp) $(wildcard src/libs/*.cpp)
 program_CXX_OBJS := ${program_CXX_SRCS:.cpp=.o}
 program_OBJS := $(program_C_OBJS) $(program_CXX_OBJS)
 program_INCLUDE_DIRS :=

@@ -1,5 +1,5 @@
 // Class file for ftp server socket.
-#include "cp_ftp_server.h"
+#include "headers/cp_ftp_server.h"
 
 // Constructor function to create ftp server socket with port number given as argument.
 FTPServer::FTPServer(int port_number){

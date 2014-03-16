@@ -20,11 +20,11 @@
 #include <sys/stat.h>
 
 
-#include "server_socket.h"
-#include "socket_exception.h"
+#include "../libs/server_socket.h"
+#include "../libs/socket_exception.h"
+#include "../libs/utility.h"
 #include "cp_ftp_request.h"
 #include "cp_ftp_response.h"
-#include "utility.h"
 
 typedef std::map<std::string, pair<std::string, std::string> > LoginInfo;
 

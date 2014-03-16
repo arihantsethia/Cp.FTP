@@ -1,5 +1,5 @@
 // Class file for ftp response class functions.
-#include "cp_ftp_response.h"
+#include "headers/cp_ftp_response.h"
 
 // Default constructor function of ftp response class.
 FTPResponse::FTPResponse() {

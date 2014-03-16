@@ -1,8 +1,8 @@
 // This file contain "main()" Function.
 
-#include "cp_ftp_client.h"
-#include "cp_ftp_server.h"
-#include "utility.h"
+#include "headers/cp_ftp_client.h"
+#include "headers/cp_ftp_server.h"
+#include "libs/utility.h"
 
 // This function takes Server name and Port value via commandline argument :- 	[[hostname] port]	
 // where [] = optional clause.

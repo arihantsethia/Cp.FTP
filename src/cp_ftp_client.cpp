@@ -1,5 +1,5 @@
 // Class file of ftp client socket.
-#include "cp_ftp_client.h"
+#include "headers/cp_ftp_client.h"
 
 // This function set host name, port name, user name and password of client.
 FTPClient::FTPClient(std::string host_name, int port_number, std::string user_name, std::string password){

@@ -1,5 +1,5 @@
 // Class file for ftp request functions.
-#include "cp_ftp_request.h"
+#include "headers/cp_ftp_request.h"
 
 // Default constructor function of ftp request class.
 FTPRequest::FTPRequest() {
