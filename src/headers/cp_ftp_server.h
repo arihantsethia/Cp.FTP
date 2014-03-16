@@ -36,17 +36,16 @@ private:
 	void get(std::string);
 	void put(std::string);
 	void add();
-	int ls(std::vector<std::string>, std::vector<std::string>, std::string&, bool print = false);
+	int ls(std::string, std::string&, bool print = false);
 	std::string syst(bool print = false);
 	std::string pwd(bool print = false);
 	int cd(std::string, bool print = false);
 	int mkd(std::string, std::string&, bool print= false);
 	int pasv();
 	bool quit();
+	int setRootDir(std::string, bool print = false);
 	LoginInfo formLoginInfoList();
 	void communicate(ServerSocket *);
-
-	//std::string parseCommand(std::string, std::vector<std::string>&, std::vector<std::string>&);
 
 public:
 	FTPServer(int);

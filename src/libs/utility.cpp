@@ -79,7 +79,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"\""<<buff<<"\""<<std::endl;
 		}
 		else {
-			data<<"Error : "<<strerror(errno)<<std::endl;
+			data<<"\"Error : "<<strerror(errno)<<"\""<<std::endl;
 		}
 	}
 	else if(cmd_type == "cd"){
@@ -90,10 +90,18 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"Error : "<<strerror(errno)<<std::endl;
 		}
 	}
+	else if(cmd_type == "chroot"){
+		if(chroot(cmd.c_str()) == 0){
+			code = 1;
+			data<<"Succesfully set the root directory : "<<cmd<<"."<<std::endl;
+		}else{
+			data<<"Error : "<<strerror(errno)<<std::endl;
+		}
+	}
 	else if(cmd_type == "mkdir"){
 		if(mkdir(cmd.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0){
 			code = 1;
-			data<<"Succesfully created directory : \""<<system("pwd")+"/"+cmd<<"\"."<<std::endl;
+			data<<"Succesfully created directory : \""<<cmd<<"\"."<<std::endl;
 		}else{
 			data<<"Error : "<<strerror(errno)<<std::endl;
 		}
@@ -104,10 +112,17 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 		}
 		else{
 			code = 1;
+			if(cmd_type=="ls"){
+				char *line;
+				size_t len = 0;
+				getline(&line, &len,in);
+				if(std::string(line).find("total")==std::string::npos){
+					code = 0;
+				}
+			}
 			while(fgets(buff,sizeof(buff), in)!=NULL){
 				data<<buff;
 			}
-
 			pclose(in);
 		}
 	}
@@ -132,38 +147,65 @@ std::vector<std::string> tokenize(std::string s, std::string sep){
 	return tokens;
 }
 
+std::string replaceAllOccurences(std::string str, std::string search, const std::string replace) {
+	std::string::size_type pos = 0;
+	while ((pos = str.find(search, pos)) != std::string::npos) {
+		str.replace(pos, search.length(), replace);
+		pos += replace.length();
+	}
+	return str;
+}
+
 // This Function separate the command in opcode and message.
-std::string parseCommand(std::string command,std::vector<std::string>& flags, std::vector<std::string>& args){
+bool parseCommand(std::string command,std::string& cmd,std::vector<std::string>& flags, std::vector<std::string>& args){
 	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
-	std::string cmd = command.substr(beginPos,endPos-beginPos);
+	cmd = command.substr(beginPos,endPos-beginPos);
 	beginPos = endPos ;
 	while(beginPos < command.length())	{
 		beginPos = command.find_first_not_of(" \r\n",endPos) ;
 		if(beginPos != std::string::npos){
 			if(command[beginPos]=='\"')	{
-					endPos = command.find_first_of('\"',beginPos+1) ;
-					if(endPos == std::string::npos)	{
-						cout << "Error" << endPos << endl ;
-					}
-					args.push_back(command.substr(beginPos,endPos-beginPos+1)) ;
-					endPos = endPos + 1 ;
+				endPos = command.find_first_of('\"',beginPos+1) ;
+				if(endPos == std::string::npos)	{
+					std::cout << "Error : Missing \" at the end." << command.substr(beginPos) << std::endl ;
+					return false;
+				}
+				args.push_back(command.substr(beginPos+1,endPos-beginPos-1)) ;
+				endPos = endPos + 1 ;
 			}else if(command[beginPos]=='-'){
-					endPos = command.find_first_of(" \r\n",beginPos) ;
-					if(endPos == std::string::npos)
-						endPos = command.length() ;
-					flags.push_back(command.substr(beginPos,endPos-beginPos)) ;
-			}else{
-					endPos = command.find_first_of(" \r\n",beginPos) ;
-					while(command[endPos-1] == '\\' && std::string::npos != endPos)	{
-						endPos = command.find_first_of(" \r\n",endPos+1) ;
-					}
-					if(endPos == std::string::npos)	{
-						endPos = command.length() ;						
-					}
-					args.push_back(command.substr(beginPos,endPos-beginPos)) ;
+				endPos = command.find_first_of(" \r\n",beginPos) ;
+				if(endPos == std::string::npos)
+					endPos = command.length() ;
+				flags.push_back(command.substr(beginPos,endPos-beginPos)) ;
+			}
+			else{
+				endPos = command.find_first_of(" \r\n",beginPos) ;
+				while(command[endPos-1] == '\\' && std::string::npos != endPos)	{
+					endPos = command.find_first_of(" \r\n",endPos+1) ;
+				}
+				if(endPos == std::string::npos)	{
+					endPos = command.length() ;						
+				}
+				args.push_back(command.substr(beginPos,endPos-beginPos)) ;
 			}
 		}
 	}				
-	return cmd ;
+	return true ;
+}
+
+// This Function separate the command in opcode and message.
+bool parseCommand(std::string command,std::string& cmd, std::string& args){
+	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
+	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
+	cmd = command.substr(beginPos,endPos-beginPos);
+	beginPos = command.find_first_not_of(" \r\n",endPos);
+	if(beginPos!=std::string::npos){
+		endPos = command.find_first_of("\r\n",beginPos);
+		if(endPos==std::string::npos){
+			return false;
+		}
+		args = command.substr(beginPos,endPos-beginPos);	
+	}
+	return true ;
 }

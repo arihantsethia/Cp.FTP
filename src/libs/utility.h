@@ -36,6 +36,7 @@ std::string getFileName(std::string);
 std::string getFilePath(std::string);
 std::string exec_cmd(std::string, std::string,int& code = RVAL);
 std::vector<std::string> tokenize(std::string, std::string);
-std::string parseCommand(std::string, std::vector<std::string>&, std::vector<std::string>&);
+bool parseCommand(std::string, std::string&, std::string&);
+bool parseCommand(std::string, std::string&, std::vector<std::string>&, std::vector<std::string>&);
 
 #endif

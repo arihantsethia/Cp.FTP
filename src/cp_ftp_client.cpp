@@ -56,132 +56,132 @@ void FTPClient::communicate(){
 		args.clear();
 		std::cout<<"Cp.FTP > ";
 		std::getline(std::cin,command);
-		cmd = parseCommand(command,flags,args);
+		if(parseCommand(command,cmd,flags,args)){
+			// get command to get file from serverside.
+			if(cmd=="get" && (args.size() == 1 || args.size()==2) && flags.size()==0){
+				std::string curr_loc = _pwd(false);
+				std::string curr_loc_server = pwd(false);
 
-		// get command to get file from serverside.
-		if(cmd=="get" && (args.size() == 1 || args.size()==2) && flags.size()==0){
-			std::string curr_loc = _pwd(false);
-			std::string curr_loc_server = pwd(false);
+				if(args.size()==2){
+					if(_cd(args[1],false)!= 1){
+						std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+						continue;
+					}
+				}
 
-			if(args.size()==2){
-				if(_cd(args[1],false)!= 1){
-					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+				std::string filePath = getFilePath(args[0]);
+
+				if(filePath!=""){
+					if(cd(filePath,false) != 250){
+						_cd(curr_loc,false);
+						std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+						continue;
+					}
+				}
+
+				get(getFileName(args[0]));
+				cd(curr_loc_server,false);
+				_cd(curr_loc,false);
+			} 
+			// put command to put file on the serverside .
+			else if(cmd=="put" && (args.size() == 1 || args.size()==2) && flags.size()==0){
+				std::string curr_loc = pwd(false);
+
+				if(args.size()==2){
+					if(cd(args[1],false)!= 250){
+						std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
+						continue;
+					}
+				}
+
+				put(args[0]);
+				cd(curr_loc,false);
+			}
+			// pwd command to see present working directory on severside.
+			else if(cmd=="pwd" && args.size() == 0 && flags.size() == 0){
+				pwd();
+			}
+			// cd command to change directory on serverside.
+			else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
+				cd(args[0]);
+			}
+			// ls command to list files and folders on serverside.
+			else if(cmd=="ls"){			
+				if(pasv()!=227){
+					std::cout<<"Couldn't get file listing."<<std::endl;
 					continue;
 				}
+				ls(flags,args);
 			}
+			// mkdir command to make directory on serverside.
+			else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
+				bool flag = true;
+				std::string curr_loc = pwd(false);
+				std::vector<string> dirs = tokenize(args[0],"/");
 
-			std::string filePath = getFilePath(args[0]);
+				for(int i=0;i<dirs.size();i++){
+					if(mkd(dirs[i],false)!=257 && cd(dirs[i],false) != 250){
+						std::cout<<"Couldn't create the required directory structure."<<std::endl;
+						flag = false;
+						break;
+					}				
+				}
 
-			if(filePath!=""){
-				if(cd(filePath,false) != 250){
-					_cd(curr_loc,false);
-					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
-					continue;
+				cd(curr_loc,false);
+
+				if(flag){
+					std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
 				}
 			}
+			// pwd command to see present working directory on clientside.
+			else if(cmd=="!pwd" && args.size() == 0 && flags.size()==0){
+				_pwd();
+			}
+			// cd command to change directory on clientside.
+			else if(cmd=="!cd" && flags.size() == 0 && args.size() == 1){
+				_cd(args[0]);
+			}
+			// ls command to list files and folders on clientside.
+			else if(cmd=="!ls"){
+				_ls(flags,args);
+			}
+			// mkdir command to make directory on clientside.
+			else if(cmd=="!mkdir" && args.size() == 1 && flags.size() == 0){
+				bool flag = true;
+				std::string curr_loc = _pwd(false);
 
-			get(getFileName(args[0]));
-			cd(curr_loc_server,false);
-			_cd(curr_loc,false);
-		} 
-		// put command to put file on the serverside .
-		else if(cmd=="put" && (args.size() == 1 || args.size()==2) && flags.size()==0){
-			std::string curr_loc = pwd(false);
+				std::vector<string> dirs = tokenize(args[0],"/");
+				for(int i=0;i<dirs.size();i++){
+					int status = _mkd(dirs[i],false);
+					status = status | _cd(dirs[i],false);
+					if(_mkd(dirs[i],false)!=1 && _cd(dirs[i],false) != 1){
+						std::cout<<"Couldn't create the required directory structure."<<std::endl;
+						flag = false;
+						break;
+					}				
+				}
 
-			if(args.size()==2){
-				if(cd(args[1],false)!= 250){
-					std::cout<<"Destination doesn't exist. File Transfer couldn't be done."<<std::endl;
-					continue;
+				_cd(curr_loc,false);
+				if(flag){
+					std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
 				}
 			}
-
-			put(args[0]);
-			cd(curr_loc,false);
-		}
-		// pwd command to see present working directory on severside.
-		else if(cmd=="pwd" && args.size() == 0 && flags.size() == 0){
-			pwd();
-		}
-		// cd command to change directory on serverside.
-		else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
-			cd(args[0]);
-		}
-		// ls command to list files and folders on serverside.
-		else if(cmd=="ls"){			
-			if(pasv()!=227){
-				std::cout<<"Couldn't get file listing."<<std::endl;
-				continue;
+			// quit command to exit from Programme.
+			else if(cmd=="quit"){
+				if(quit()){
+					(*control_socket).close();
+					return;
+				}else{
+					std::cout<<"Couldn't terminate the session."<<std::endl;
+				}
 			}
-			ls(flags,args);
-		}
-		// mkdir command to make directory on serverside.
-		else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
-			bool flag = true;
-			std::string curr_loc = pwd(false);
-			std::vector<string> dirs = tokenize(args[0],"/");
-
-			for(int i=0;i<dirs.size();i++){
-				if(mkd(dirs[i],false)!=257 && cd(dirs[i],false) != 250){
-					std::cout<<"Couldn't create the required directory structure."<<std::endl;
-					flag = false;
-					break;
-				}				
+			// help command for any syntax related help.
+			else if(cmd=="help"){
+				help();
 			}
-
-			cd(curr_loc,false);
-
-			if(flag){
-				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
+			else{
+				std::cout<<"Command improperly formatted. Type \"help\" for reference."<<std::endl;
 			}
-		}
-		// pwd command to see present working directory on clientside.
-		else if(cmd=="!pwd" && args.size() == 0 && flags.size()==0){
-			_pwd();
-		}
-		// cd command to change directory on clientside.
-		else if(cmd=="!cd" && flags.size() == 0 && args.size() == 1){
-			_cd(args[0]);
-		}
-		// ls command to list files and folders on clientside.
-		else if(cmd=="!ls"){
-			_ls(flags,args);
-		}
-		// mkdir command to make directory on clientside.
-		else if(cmd=="!mkdir" && args.size() == 1 && flags.size() == 0){
-			bool flag = true;
-			std::string curr_loc = _pwd(false);
-
-			std::vector<string> dirs = tokenize(args[0],"/");
-			for(int i=0;i<dirs.size();i++){
-				int status = _mkd(dirs[i],false);
-				status = status | _cd(dirs[i],false);
-				if(_mkd(dirs[i],false)!=1 && _cd(dirs[i],false) != 1){
-					std::cout<<"Couldn't create the required directory structure."<<std::endl;
-					flag = false;
-					break;
-				}				
-			}
-
-			_cd(curr_loc,false);
-			if(flag){
-				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
-			}
-		}
-		// quit command to exit from Programme.
-		else if(cmd=="quit"){
-			if(quit()){
-				(*control_socket).close();
-				return;
-			}else{
-				std::cout<<"Couldn't terminate the session."<<std::endl;
-			}
-		}
-		// help command for any syntax related help.
-		else if(cmd=="help"){
-			help();
-		}
-		else{
-			std::cout<<"Command improperly formatted. Type \"help\" for reference."<<std::endl;
 		}
 	}
 }
@@ -463,6 +463,7 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 			std::cout<<p_response;
 		}
 		if(return_code != 150){
+			response = "";
 			return;
 		}
 
@@ -483,7 +484,6 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 			std::cout<<p_response;
 		}
 	} catch(SocketException &e){
-		(*data_socket).close();
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
 	}
