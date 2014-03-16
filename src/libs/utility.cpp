@@ -133,29 +133,37 @@ std::vector<std::string> tokenize(std::string s, std::string sep){
 }
 
 // This Function separate the command in opcode and message.
-std::string parseCommand(std::string command, std::vector<std::string>& flags, std::vector<std::string>& args){
+std::string parseCommand(std::string command,std::vector<std::string>& flags, std::vector<std::string>& args){
 	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
 	std::string cmd = command.substr(beginPos,endPos-beginPos);
-	while(beginPos!=std::string::npos){
-		beginPos = command.find_first_not_of(" \r\n", endPos);
+	beginPos = endPos ;
+	while(beginPos < command.length())	{
+		beginPos = command.find_first_not_of(" \r\n",endPos) ;
 		if(beginPos != std::string::npos){
-			endPos = command.find_first_of(" \r\n",beginPos);
-			if(endPos != std::string::npos){
-				if(command[beginPos] == '-'){
-					flags.push_back(command.substr(beginPos,endPos-beginPos));
-				}else{
-					args.push_back(command.substr(beginPos,endPos-beginPos));
-				}
+			if(command[beginPos]=='\"')	{
+					endPos = command.find_first_of('\"',beginPos+1) ;
+					if(endPos == std::string::npos)	{
+						cout << "Error" << endPos << endl ;
+					}
+					args.push_back(command.substr(beginPos,endPos-beginPos+1)) ;
+					endPos = endPos + 1 ;
+			}else if(command[beginPos]=='-'){
+					endPos = command.find_first_of(" \r\n",beginPos) ;
+					if(endPos == std::string::npos)
+						endPos = command.length() ;
+					flags.push_back(command.substr(beginPos,endPos-beginPos)) ;
 			}else{
-				if(command[beginPos] == '-'){
-					flags.push_back(command.substr(beginPos));
-				}else{
-					args.push_back(command.substr(beginPos));
-				}
-				break;
+					endPos = command.find_first_of(" \r\n",beginPos) ;
+					while(command[endPos-1] == '\\' && std::string::npos != endPos)	{
+						endPos = command.find_first_of(" \r\n",endPos+1) ;
+					}
+					if(endPos == std::string::npos)	{
+						endPos = command.length() ;						
+					}
+					args.push_back(command.substr(beginPos,endPos-beginPos)) ;
 			}
 		}
-	}
-	return cmd;
+	}				
+	return cmd ;
 }
