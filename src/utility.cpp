@@ -1,5 +1,9 @@
+// Class of utitlity functions like  get Path name and file name from string 
+
+
 #include "utility.h"
 
+// This function checks whether string contain valid host address or not. 
 int hostlookup(std::string h){
 	const char *host = h.c_str();
 	struct sockaddr_in inaddr;
@@ -24,6 +28,7 @@ int hostlookup(std::string h){
 	return(inaddr.sin_addr.s_addr);
 }
 
+// This function checks whether string represent a valid number or not.
 bool is_number(std::string s) {
 	for(int i=0; i<s.length(); i++)
 		if(!isdigit(s[i]))
@@ -31,6 +36,7 @@ bool is_number(std::string s) {
 	return true ;
 }
 
+// This function return password given by user on console.
 std::string getPassword(){
 	termios oldt;
 	tcgetattr(STDIN_FILENO, &oldt);
@@ -45,11 +51,13 @@ std::string getPassword(){
 	return pass;
 }
 
+//	This function return FileName from the complete path of file.
 std::string getFileName(std::string str){
 	std::string::size_type pos = str.find_last_of("/\\");
 	return str.substr(pos+1);
 }
 
+//	This function return FilePath without including FileName.
 std::string getFilePath(std::string str){
 	std::string::size_type pos = str.find_last_of("/\\");
 	if(pos==std::string::npos){
@@ -58,6 +66,7 @@ std::string getFilePath(std::string str){
 	return str.substr(0,pos);
 }
 
+//	This Function executes system commands(pwd,cd,mkdir,popen) if they are valid otherwise return error.
 std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 
 	FILE *in;
@@ -106,6 +115,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 	return data.str();
 }
 
+// This function tokenizes the string on the basis of delimeters space or newline or cariage return.
 std::vector<std::string> tokenize(std::string s, std::string sep){
 	// Skip delimiters at beginning.
 	std::string::size_type lastPos = s.find_first_not_of(sep, 0);	
@@ -122,6 +132,7 @@ std::vector<std::string> tokenize(std::string s, std::string sep){
 	return tokens;
 }
 
+// This Function separate the command in opcode and message.
 std::string parseCommand(std::string command, std::vector<std::string>& flags, std::vector<std::string>& args){
 	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);

@@ -1,5 +1,7 @@
+// Class file of ftp client socket.
 #include "cp_ftp_client.h"
 
+// This function set host name, port name, user name and password of client.
 FTPClient::FTPClient(std::string host_name, int port_number, std::string user_name, std::string password){
 	std::cout<<"\nSi.FTP-Client Started\n\n";
 	host = host_name;
@@ -8,10 +10,12 @@ FTPClient::FTPClient(std::string host_name, int port_number, std::string user_na
 	port = port_number;
 }
 
+// Destructer function of ftp client class.
 FTPClient::~FTPClient() {
 
 }
 
+// Initiate connection between Client and Server by sending UserName and Password.
 void FTPClient::start(){
 	std::cout<<"Connecting to Host : "<< host<< " Port : "<<port<<std::endl;
 
@@ -42,6 +46,7 @@ void FTPClient::start(){
 	}
 }
 
+// Get a valid FTP command from user and send it to Server.
 void FTPClient::communicate(){
 	std::string command,cmd;
 	std::vector<std::string> flags,args;
@@ -53,6 +58,7 @@ void FTPClient::communicate(){
 		std::getline(std::cin,command);
 		cmd = parseCommand(command,flags,args);
 
+		// get command to get file from serverside.
 		if(cmd=="get" && (args.size() == 1 || args.size()==2) && flags.size()==0){
 			std::string curr_loc = _pwd(false);
 			std::string curr_loc_server = pwd(false);
@@ -77,7 +83,8 @@ void FTPClient::communicate(){
 			get(getFileName(args[0]));
 			cd(curr_loc_server,false);
 			_cd(curr_loc,false);
-		}
+		} 
+		// put command to put file on the serverside .
 		else if(cmd=="put" && (args.size() == 1 || args.size()==2) && flags.size()==0){
 			std::string curr_loc = pwd(false);
 
@@ -91,12 +98,15 @@ void FTPClient::communicate(){
 			put(args[0]);
 			cd(curr_loc,false);
 		}
+		// pwd command to see present working directory on severside.
 		else if(cmd=="pwd" && args.size() == 0 && flags.size() == 0){
 			pwd();
 		}
+		// cd command to change directory on serverside.
 		else if(cmd=="cd" && flags.size() == 0 && args.size() == 1){
 			cd(args[0]);
 		}
+		// ls command to list files and folders on serverside.
 		else if(cmd=="ls"){			
 			if(pasv()!=227){
 				std::cout<<"Couldn't get file listing."<<std::endl;
@@ -104,6 +114,7 @@ void FTPClient::communicate(){
 			}
 			ls(flags,args);
 		}
+		// mkdir command to make directory on serverside.
 		else if(cmd=="mkdir" && args.size() == 1 && flags.size() == 0){
 			bool flag = true;
 			std::string curr_loc = pwd(false);
@@ -123,15 +134,19 @@ void FTPClient::communicate(){
 				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
 			}
 		}
+		// pwd command to see present working directory on clientside.
 		else if(cmd=="!pwd" && args.size() == 0 && flags.size()==0){
 			_pwd();
 		}
+		// cd command to change directory on clientside.
 		else if(cmd=="!cd" && flags.size() == 0 && args.size() == 1){
 			_cd(args[0]);
 		}
+		// ls command to list files and folders on clientside.
 		else if(cmd=="!ls"){
 			_ls(flags,args);
 		}
+		// mkdir command to make directory on clientside.
 		else if(cmd=="!mkdir" && args.size() == 1 && flags.size() == 0){
 			bool flag = true;
 			std::string curr_loc = _pwd(false);
@@ -152,6 +167,7 @@ void FTPClient::communicate(){
 				std::cout<<"Directory structure "<<args[0]<< " successfully created."<<std::endl;
 			}
 		}
+		// quit command to exit from Programme.
 		else if(cmd=="quit"){
 			if(quit()){
 				(*control_socket).close();
@@ -160,6 +176,7 @@ void FTPClient::communicate(){
 				std::cout<<"Couldn't terminate the session."<<std::endl;
 			}
 		}
+		// help command for any syntax related help.
 		else if(cmd=="help"){
 			help();
 		}
@@ -169,6 +186,7 @@ void FTPClient::communicate(){
 	}
 }
 
+// This function get file from server system.
 void FTPClient::get(std::string args){
 	std::ofstream out(getFileName(args).c_str(), std::ios::out| std::ios::binary);
 	string data;
@@ -252,6 +270,7 @@ void FTPClient::get(std::string args){
 	}
 }
 
+// This fucntion put file on server system.
 void FTPClient::put(std::string args){
 	std::ifstream in(args.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 	
@@ -339,6 +358,7 @@ void FTPClient::put(std::string args){
 
 }
 
+// This function return exit status.
 bool FTPClient::quit(){
 	request = FTPRequest("QUIT").getRequest();
 
@@ -353,6 +373,7 @@ bool FTPClient::quit(){
 	return true;
 }
 
+// This function initiate passive mode.
 int FTPClient::pasv(){
 	request = FTPRequest("PASV").getRequest();
 
@@ -374,6 +395,7 @@ int FTPClient::pasv(){
 	return return_code;
 }
 
+// This function show present working directory on server system.
 std::string FTPClient::pwd( bool print){
 	request = FTPRequest("PWD","").getRequest();
 
@@ -392,6 +414,7 @@ std::string FTPClient::pwd( bool print){
 	}
 }
 
+// This function change directory on server system.
 int FTPClient::cd(std::string args,bool print){
 	request = FTPRequest("CWD",args).getRequest();
 
@@ -409,6 +432,7 @@ int FTPClient::cd(std::string args,bool print){
 	}
 }
 
+// This function make directory on server system.
 int FTPClient::mkd(std::string args,bool print){
 	request = FTPRequest("MKD",args).getRequest();
 
@@ -426,6 +450,7 @@ int FTPClient::mkd(std::string args,bool print){
 	}
 }
 
+// This function  directory on Client System.
 void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
 	request = FTPRequest("LIST",flags,args).getRequest();
 
@@ -464,6 +489,7 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 	}
 }
 
+// This function return present working directory on Client System.
 std::string FTPClient::_pwd(bool print){
 	request = FTPRequest("pwd","").getRequest("\n");
 	response = exec_cmd("pwd",request);
@@ -473,6 +499,7 @@ std::string FTPClient::_pwd(bool print){
 	return response.substr(1,response.length()-3);
 }
 
+// This function change directory on Client System.
 int FTPClient::_cd(std::string args, bool print){
 	response = exec_cmd("cd",args,return_code);
 	if(print){
@@ -481,6 +508,7 @@ int FTPClient::_cd(std::string args, bool print){
 	return return_code;
 }
 
+// This function show listing of files and directories on Client System.
 void FTPClient::_ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
 	request = FTPRequest("ls",flags,args).getRequest("\n");
 	response = exec_cmd("ls",request);
@@ -489,6 +517,7 @@ void FTPClient::_ls(std::vector<std::string> flags, std::vector<std::string> arg
 	}
 }
 
+// This function create directory on Client System.
 int FTPClient::_mkd(std::string args,bool print){
 	response = exec_cmd("mkdir",args,return_code);
 	if(print){
@@ -497,6 +526,7 @@ int FTPClient::_mkd(std::string args,bool print){
 	return return_code;
 }
 
+// This function return solutions for syntax related queries.
 void FTPClient::help(){
 	string cmd_desc = "";
 

@@ -1,23 +1,29 @@
+// Class file for ftp request functions.
 #include "cp_ftp_request.h"
 
+// Default constructor function of ftp request class.
 FTPRequest::FTPRequest() {
 
 }
 
+// Default destructor function of ftp request class.
 FTPRequest::~FTPRequest(){
 	
 }
 
+// Constructor function of ftp request class with command as argument.
 FTPRequest::FTPRequest(std::string cmd) {
 	_cmd = cmd;
 	_arg = "";
 }
 
+// Constructor function of ftp request class with command and argument as function argument.
 FTPRequest::FTPRequest(std::string cmd, std::string arg) {
 	_cmd = cmd;
 	_arg =  " "+arg;
 }
 
+// Constructor function of ftp request class with command and flags as function argument.
 FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags) {
 	_cmd = cmd;
 	_arg = "";
@@ -26,6 +32,7 @@ FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags) {
 	}
 }
 
+// Constructor function of ftp request class with command, argument and flags as function argument.
 FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags, vector<std::string> args) {
 	_cmd = cmd;
 	_arg = "";
@@ -37,16 +44,19 @@ FTPRequest::FTPRequest(std::string cmd, vector<std::string> flags, vector<std::s
 	}
 }
 
+// set request function of ftp request class with command as function argument.
 void FTPRequest::setRequest(std::string cmd) {
 	_cmd = cmd;
 	_arg = "";
 }
 
+// set request function of ftp request class with command and argument as function argument.
 void FTPRequest::setRequest(std::string cmd, std::string arg) {
 	_cmd = cmd;
 	_arg =  " "+arg;
 }
 
+// set request function of ftp request class with command and flags as function argument.
 void FTPRequest::setRequest(std::string cmd, vector<std::string> flags) {
 	_cmd = cmd;
 	_arg = "";
@@ -55,6 +65,7 @@ void FTPRequest::setRequest(std::string cmd, vector<std::string> flags) {
 	}
 }
 
+// set request function of ftp request class with command, arguments and flags as function argument.
 void FTPRequest::setRequest(std::string cmd, vector<std::string> flags, vector<std::string> args) {
 	_cmd = cmd;
 	_arg = "";
@@ -66,6 +77,7 @@ void FTPRequest::setRequest(std::string cmd, vector<std::string> flags, vector<s
 	}
 }
 
+// get request function of ftp request class with terminator as function argument.
 std::string FTPRequest::getRequest(std::string terminator) {
 	if(_arg == "")	{
 		return _cmd + terminator;
@@ -91,6 +103,7 @@ std::string FTPRequest::getRequest(std::string terminator) {
 	}
 }
 
+// get request function of ftp request class without any function argument.
 std::string FTPRequest::getRequest() {
 	return getRequest("\r\n");
 }

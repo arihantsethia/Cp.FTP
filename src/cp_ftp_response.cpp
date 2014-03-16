@@ -1,29 +1,36 @@
+// Class file for ftp response class functions.
 #include "cp_ftp_response.h"
 
+// Default constructor function of ftp response class.
 FTPResponse::FTPResponse() {
 
 }
 
+// Default destructor function of ftp response class.
 FTPResponse::~FTPResponse(){
 	_msg = "";
 	status_code = "";
 }
 
+// Default constructor function of ftp response class with string response as function argument.
 FTPResponse::FTPResponse(std::string response) {
 	_msg = response;
 	status_code = "";
 }
 
+// Default constructor function of ftp response class with string response as function argument.
 FTPResponse::FTPResponse(std::string code,std::string msg){
 	status_code = code;
 	_msg = msg;
 }
 
+// set response function of ftp response class with string response as function argument.
 void FTPResponse::setResponse(std::string response) {
 	_msg = response;
 	status_code = "";
 }
 
+// parse response function of ftp response class.
 std::string FTPResponse::parseResponse() {
 	std::string::size_type beginPos = _msg.find_first_not_of(" ", 0);
 	if(isdigit(_msg[beginPos])){
@@ -34,22 +41,26 @@ std::string FTPResponse::parseResponse() {
 	return _msg.substr(beginPos);
 }
 
+// parse response function of ftp response class with code as function argument.
 std::string FTPResponse::parseResponse(int& code) {
 	std::string response = parseResponse();
 	code = atoi(status_code.c_str());
 	return response;
 }
 
+// form response function of ftp response class.
 std::string FTPResponse::formResponse(){
 	return status_code+" "+_msg+"\r\n";
 }
 
+// return code function of ftp response class.
 int FTPResponse::returnCode() {
 	if(status_code == "")
 		std::string response = parseResponse();
 	return atoi(status_code.c_str());
 }
 
+//	return port number.
 int FTPResponse::getPort() {
 	std::string::size_type beginPos = _msg.find("(", 0);
 	std::string::size_type endPos = _msg.find(")",beginPos);

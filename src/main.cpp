@@ -1,7 +1,11 @@
+// This file contain "main()" Function.
+
 #include "cp_ftp_client.h"
 #include "cp_ftp_server.h"
 #include "utility.h"
 
+// This function takes Server name and Port value via commandline argument :- 	[[hostname] port]	
+// where [] = optional clause.
 int main(int argc, char* argv[]){
 	if(argc==2){
 		int port = atoi(argv[1]);

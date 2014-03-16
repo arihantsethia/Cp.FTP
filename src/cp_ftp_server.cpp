@@ -1,14 +1,18 @@
+// Class file for ftp server socket.
 #include "cp_ftp_server.h"
 
+// Constructor function to create ftp server socket with port number given as argument.
 FTPServer::FTPServer(int port_number){
 	std::cout<<"Cp.FTP-Server Started\n";
 	port = port_number;
 }
 
+// Destructor function to ftp server socket.
 FTPServer::~FTPServer() {
 
 }
 
+// Start ftp server on default port and listen to requests form clients.
 void FTPServer::start(){
 	std::cout<<"Starting server on port :"<<port<<std::endl;
 
@@ -39,6 +43,7 @@ void FTPServer::start(){
 	}
 }
 
+// Send Response to Client and Get command from client.
 void FTPServer::communicate(ServerSocket *server_socket){
 	std::string data="",responseMsg="",cmd,user,pass;
 	std::vector<std::string> flags,args;
@@ -63,13 +68,14 @@ void FTPServer::communicate(ServerSocket *server_socket){
 			//recv data from the client and store it in buffer
 			*server_socket >> data;
 			cmd = parseCommand(data,flags,args);
-
+			// get user command from client side.
 			if(cmd=="USER" && flags.size()==0 && args.size()==1){
 				login_list = formLoginInfoList();
 				user = args[0];	 
 				responseMsg = FTPResponse("331","Please specify the password.").formResponse();
 				*server_socket << responseMsg;
 			}
+			// get pass command from client side.
 			else if(cmd=="PASS" && flags.size()==0 && args.size()==1){
 				pass = args[0];
 
@@ -87,14 +93,17 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get syst command from client side for getting server system information.
 			else if(cmd=="SYST" && flags.size()==0 && args.size()==0){
 				responseMsg = FTPResponse("215",syst()).formResponse();
 				*server_socket << responseMsg;
 			}
+			// get pwd command from cient side for getting present working directory of server system.
 			else if(cmd=="PWD" && flags.size()==0 && args.size()==0 && logged_in){
 				responseMsg = FTPResponse("257","\""+pwd()+"\"").formResponse();
 				*server_socket << responseMsg;
 			}
+			// get cwd command from cient side for changing working directory of server system.
 			else if(cmd=="CWD" && flags.size()==0 && args.size()==1 && logged_in){
 
 				if(cd(args[0])){
@@ -106,6 +115,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get mkd command from cient side for making new directory in server system.
 			else if(cmd=="MKD" && flags.size()==0 && args.size()==1 && logged_in){
 				std::string response;
 
@@ -118,6 +128,8 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get list command from cient side for getting info regarding all files and folders in 
+			// present working directory of server system.
 			else if(cmd=="LIST" && logged_in){
 
 				if((*data_socket).fd() != -1 ){
@@ -152,6 +164,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 				}
 				*server_socket << responseMsg;
 			}
+			// get type command from cient side for switching to Binary mode.
 			else if(cmd=="TYPE" && flags.size()==0 && args.size()==1 && logged_in){
 
 				if(args[0] == "I"|| args[0] == "A"){
@@ -163,6 +176,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get pasv command from cient side for switching to PASV mode.
 			else if(cmd=="PASV" && flags.size()==0 && args.size()==0 && logged_in){
 
 				try{
@@ -179,6 +193,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get stor command from cient side for storing file in present working directory of server system.
 			else if(cmd=="STOR" && flags.size()==0 && args.size()==1 && logged_in){
 
 				if(binary_mode){
@@ -225,6 +240,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get retr command from cient side for getting particular file from present working directory of server system.
 			else if(cmd=="RETR" && flags.size()==0 && args.size()==1 && logged_in){
 				std::string data;
 				ServerSocket temp_socket;
@@ -269,6 +285,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 
 				*server_socket << responseMsg;
 			}
+			// get quit command for stop server system.
 			else if(cmd=="QUIT" && flags.size()==0 && args.size()==0){
 
 				try{
@@ -281,6 +298,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 					*server_socket << responseMsg;
 				}
 			}
+			// for login request.
 			else if(!logged_in){
 				responseMsg = FTPResponse("332","Need account for login.").formResponse();
 				*server_socket << responseMsg;
@@ -295,6 +313,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 	}
 }
 
+// Return present working directory of server to client.
 std::string FTPServer::pwd( bool print){
 	std::string request = FTPRequest("pwd","").getRequest("\n");
 	std::string response = exec_cmd("pwd",request);
@@ -306,6 +325,7 @@ std::string FTPServer::pwd( bool print){
 	return response.substr(1,response.length()-3);
 }
 
+// Change directory on server side and return status code.
 int FTPServer::cd(std::string args, bool print){
 	int return_code;
 	std::string response = exec_cmd("cd",args,return_code);
@@ -317,6 +337,7 @@ int FTPServer::cd(std::string args, bool print){
 	return return_code;
 }
 
+// return list of files and folders of current working directory from server side.
 int FTPServer::ls(std::vector<std::string> flags, std::vector<std::string> args,std::string& response, bool print){
 	int return_code;
 	std::string request = FTPRequest("ls",flags,args).getRequest("\n");
@@ -329,6 +350,7 @@ int FTPServer::ls(std::vector<std::string> flags, std::vector<std::string> args,
 	return return_code;
 }
 
+// return status code corresponding to make directory from server side.
 int FTPServer::mkd(std::string args,std::string& response,bool print){
 	int return_code;
 	response = exec_cmd("mkdir",args,return_code);
@@ -340,6 +362,7 @@ int FTPServer::mkd(std::string args,std::string& response,bool print){
 	return return_code;
 }
 
+// return system information of server system.
 std::string FTPServer::syst(bool print){
 	std::string request = FTPRequest("uname").getRequest("\n");
 	std::string response = exec_cmd("uname",request);
@@ -351,6 +374,7 @@ std::string FTPServer::syst(bool print){
 	return response;
 }
 
+// return list of all users subscribed to server.
 LoginInfo FTPServer::formLoginInfoList(){
 	LoginInfo login_list;
 	std::ifstream in("src/data/login.info", std::ios::in| std::ios::binary);
