@@ -20,7 +20,7 @@ void FTPServer::start(){
 		//Creates new socket which listens to requests from clients
 		ServerSocket control_socket(port);
 		ServerSocket *server_socket = new ServerSocket();
-
+		// wait for request from client
 		while(1){
 			try{
 				control_socket.accept(*server_socket);
@@ -36,7 +36,7 @@ void FTPServer::start(){
 				continue ;
 			}
 		}
-
+	// check for any exceptions
 	} catch(SocketException &e){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ;
@@ -49,7 +49,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 	ServerSocket *data_socket;
 	LoginInfo login_list;
 	bool logged_in = false, binary_mode = false;
-
+	// communicating with client by sending hello message.
 	try{
 		responseMsg = FTPResponse("200","(Cp.FTP v1.0)").formResponse();
 		*server_socket << responseMsg;
@@ -57,7 +57,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 		std::cout<<"Exception occurred : "<<e.description()<<std::endl;
 		return ; 
 	}
-
+	// always ready to listen.
 	while(1){
 		args.clear();
 		cmd.clear();
@@ -128,13 +128,13 @@ void FTPServer::communicate(ServerSocket *server_socket){
 				// get list command from cient side for getting info regarding all files and folders in 
 				// present working directory of server system.
 				else if(cmd=="LIST" && logged_in){
-
+					// check for data socket connection with client.
 					if((*data_socket).fd() != -1 ){
 						std::string response;
 						if(ls(args,response)){
 							responseMsg = FTPResponse("150","Here comes the directory listing.").formResponse();
 							*server_socket << responseMsg;
-
+							// send list of directory to client.
 							try{
 								int pos = 0,len=response.length();
 								std::string buffer;
@@ -163,7 +163,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 				}
 				// get type command from cient side for switching to Binary mode.
 				else if(cmd=="TYPE"  && args.size()!=0 && logged_in){
-
+					// check arguments for switching to binary mode.
 					if(args == "I"|| args == "A"){
 						binary_mode = true;
 						responseMsg = FTPResponse("200","Switching to Binary mode.").formResponse();
@@ -175,7 +175,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 				}
 				// get pasv command from cient side for switching to PASV mode.
 				else if(cmd=="PASV" && args.size()==0 && logged_in){
-
+					// try and catch for exception handling of socket exception event.
 					try{
 						data_socket =  new ServerSocket(0);
 						std::string host =  (*server_socket).host();
@@ -192,18 +192,18 @@ void FTPServer::communicate(ServerSocket *server_socket){
 				}
 				// get stor command from cient side for storing file in present working directory of server system.
 				else if(cmd=="STOR" && args.size()!=0 && logged_in){
-
+					//  check for binary mode to send file to server
 					if(binary_mode){
 						if((*data_socket).fd() != -1 ){
 							std::ofstream out(args.c_str(), std::ios::out| std::ios::binary);
-
+							// check for file to be send
 							if(out){
 								std::string buff;
 								ServerSocket temp_socket;
 								responseMsg = FTPResponse("150", "Ok to send data.").formResponse();
 								*server_socket<<responseMsg;
 								(*data_socket).accept(temp_socket);
-
+								// put whole data on buffer named buff.
 								while(1){
 									try{
 										buff = "";
@@ -217,7 +217,7 @@ void FTPServer::communicate(ServerSocket *server_socket){
 									}
 									out << buff;																					
 								}
-
+								// close connection.
 								out.close();
 								temp_socket.close();
 								(*data_socket).close();
@@ -241,11 +241,11 @@ void FTPServer::communicate(ServerSocket *server_socket){
 					std::string data;
 					ServerSocket temp_socket;
 					std::stringstream res_stream;
-
+					// check for transmission mode to be binary
 					if(binary_mode){
 						if((*data_socket).fd() != -1 ){
 							std::ifstream in(args.c_str(), std::ios::in| std::ios::binary| std::ios::ate);
-
+							// cheeck for retrieve a file from server.
 							if(in){
 								long length = in.tellg();
 								in.seekg (0, in.beg);

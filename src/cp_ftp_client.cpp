@@ -18,7 +18,7 @@ FTPClient::~FTPClient() {
 // Initiate connection between Client and Server by sending UserName and Password.
 void FTPClient::start(){
 	std::cout<<"Connecting to Host : "<< host<< " Port : "<<port<<std::endl;
-
+	// try to connecting to server otherwise throws exceptions.
 	try{
 		control_socket = new ClientSocket(host,port);
 		*control_socket>>response;
@@ -50,7 +50,7 @@ void FTPClient::start(){
 void FTPClient::communicate(){
 	std::string command,cmd;
 	std::vector<std::string> flags,args;
-
+	// always ready to send.
 	while(1){
 		flags.clear();
 		args.clear();
@@ -191,8 +191,10 @@ void FTPClient::get(std::string args){
 	std::ofstream out(getFileName(args).c_str(), std::ios::out| std::ios::binary);
 	string data;
 	double length;
+	// check for availability of file.
 	if(out){
 		request =  FTPRequest("TYPE","I").getRequest();
+		// socket exceptions handling
 		try{
 			*control_socket<<request;
 			*control_socket>>response;
@@ -206,6 +208,7 @@ void FTPClient::get(std::string args){
 			return;
 		}
 
+		// transfer mode is not passive mode.
 		if(pasv()!=227){
 			std::cout<<"File Transfer couldn't be initiated."<<std::endl;
 			return;
@@ -226,6 +229,7 @@ void FTPClient::get(std::string args){
 
 		std::cout<<"Receiving File : "<<getFileName(args)<<" ...."<<std::endl;
 		
+		// store data in buffer named data.
 		while (1){
 			data = "";
 			*data_socket>>data;
@@ -236,6 +240,7 @@ void FTPClient::get(std::string args){
 			out<<data;
 		}
 
+		// close connection.
 		(*data_socket).close();
 		*control_socket>>response;
 		out.close();
@@ -243,6 +248,7 @@ void FTPClient::get(std::string args){
 		FTPResponse ftp_response(response);
 		std::cout<<ftp_response.parseResponse(status_code);
 
+		// get file size by status code.
 		if(status_code == 226){
 			std::string size_msg = "bytes";
 			precision = 0;
@@ -273,12 +279,12 @@ void FTPClient::get(std::string args){
 // This fucntion put file on server system.
 void FTPClient::put(std::string args){
 	std::ifstream in(args.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
-	
+	// check for existence of file name.
 	if(in){
 		long length = in.tellg();
 		in.seekg (0, in.beg);
 		request =  FTPRequest("TYPE","I").getRequest();
-
+		// try to conncect to server.
 		try{
 			*control_socket<<request;
 			*control_socket>>response;
@@ -292,6 +298,7 @@ void FTPClient::put(std::string args){
 			return;
 		}
 
+		// transfer mode is not passive mode.
 		if(pasv()!=227){
 			std::cout<<"File Transfer couldn't be initiated."<<std::endl;
 			return;
@@ -316,6 +323,7 @@ void FTPClient::put(std::string args){
 
 		double c_length=length;
 		
+		// send all data to server.
 		while (length>0){
 			int read_sz = MAXRECV<length ? MAXRECV : length;
 			char buf[MAXRECV+1];
@@ -325,12 +333,15 @@ void FTPClient::put(std::string args){
 			length -= read_sz;
 		}
 
+		// close connection.
 		(*data_socket).close();
 		*control_socket>>response;
 		in.close();
 		int status_code,precision;
 		FTPResponse ftp_response(response);
 		std::cout<<ftp_response.parseResponse(status_code);
+		
+		// get file size by looking at status code.
 		if(status_code == 226){
 			std::string size_msg = "bytes";
 			precision = 0;
@@ -361,7 +372,7 @@ void FTPClient::put(std::string args){
 // This function return exit status.
 bool FTPClient::quit(){
 	request = FTPRequest("QUIT").getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -376,7 +387,7 @@ bool FTPClient::quit(){
 // This function initiate passive mode.
 int FTPClient::pasv(){
 	request = FTPRequest("PASV").getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -398,7 +409,7 @@ int FTPClient::pasv(){
 // This function show present working directory on server system.
 std::string FTPClient::pwd( bool print){
 	request = FTPRequest("PWD","").getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -417,7 +428,7 @@ std::string FTPClient::pwd( bool print){
 // This function change directory on server system.
 int FTPClient::cd(std::string args,bool print){
 	request = FTPRequest("CWD",args).getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -435,7 +446,7 @@ int FTPClient::cd(std::string args,bool print){
 // This function make directory on server system.
 int FTPClient::mkd(std::string args,bool print){
 	request = FTPRequest("MKD",args).getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -453,7 +464,7 @@ int FTPClient::mkd(std::string args,bool print){
 // This function  directory on Client System.
 void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args, bool print){
 	request = FTPRequest("LIST",flags,args).getRequest();
-
+	// socket exceptions handling
 	try{
 		*control_socket<<request;
 		*control_socket>>response;
@@ -467,6 +478,7 @@ void FTPClient::ls(std::vector<std::string> flags, std::vector<std::string> args
 			return;
 		}
 
+		// get response from data socket.
 		while(1){
 			response = "";
 			*data_socket >> response;

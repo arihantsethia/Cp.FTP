@@ -7,11 +7,13 @@
 // This function takes Server name and Port value via commandline argument :- 	[[hostname] port]	
 // where [] = optional clause.
 int main(int argc, char* argv[]){
+	// run server on localhost.
 	if(argc==2){
 		int port = atoi(argv[1]);
 		FTPServer server(port);
 		server.start();
 	}
+	// run server on given address and port number.
 	else if(argc==3){
 		std::string host(argv[1]);
 		if(std::count(host.begin(), host.end(), '.') == 3 && is_number(argv[2]) && atoi(argv[2]) < 65536){
@@ -30,6 +32,7 @@ int main(int argc, char* argv[]){
 			std::cout<<argv[0]<<" [int].[int].[int].[int] [int(1-65536)]"<<std::endl;
 		}
 	}
+	// Incorrect arguments specified by user.
 	else{
 		std::cout<<"Incorrect usage."<<std::endl;
 		std::cout<<argv[0]<<" [port] : to use is as an ftp-server hosted on [port]"<<std::endl;

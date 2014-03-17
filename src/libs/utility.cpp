@@ -14,7 +14,7 @@ int hostlookup(std::string h){
 	}
 
 	memset ((char * ) &inaddr, 0, sizeof inaddr);
-
+	// check for host address.
 	if ((int)(inaddr.sin_addr.s_addr = inet_addr(host)) == -1){
 		if ((hostp = gethostbyname(host)) == NULL){
 			throw SocketException(strerror(errno));
@@ -73,6 +73,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 	char buff[2048];
 	std::stringstream data;
 	code = 0;
+	// use system function getcwd to get current working directory.
 	if(cmd_type == "pwd"){
 		if (getcwd(buff, sizeof(buff)) != NULL){
 			code = 1;
@@ -82,6 +83,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"\"Error : "<<strerror(errno)<<"\""<<std::endl;
 		}
 	}
+	// use system function chdir to change directory.
 	else if(cmd_type == "cd"){
 		if(chdir(cmd.c_str()) == 0){
 			code = 1;
@@ -90,6 +92,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"Error : "<<strerror(errno)<<std::endl;
 		}
 	}
+	// use system function chroot to change chroot directory.
 	else if(cmd_type == "chroot"){
 		if(chroot(cmd.c_str()) == 0){
 			code = 1;
@@ -98,6 +101,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"Error : "<<strerror(errno)<<std::endl;
 		}
 	}
+	// use system function mkdir to make new directory.
 	else if(cmd_type == "mkdir"){
 		if(mkdir(cmd.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0){
 			code = 1;
@@ -106,6 +110,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			data<<"Error : "<<strerror(errno)<<std::endl;
 		}
 	}
+	// use system function popen to get output of terminal commands.
 	else{
 		if(!(in = popen(cmd.c_str(), "r"))){
 			data<<"Couldn't execute the command : "<<cmd<<std::endl;
@@ -126,7 +131,7 @@ std::string exec_cmd(std::string cmd_type,std::string cmd,int& code) {
 			pclose(in);
 		}
 	}
-
+	// return result.
 	return data.str();
 }
 
@@ -162,6 +167,7 @@ bool parseCommand(std::string command,std::string& cmd,std::vector<std::string>&
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
 	cmd = command.substr(beginPos,endPos-beginPos);
 	beginPos = endPos ;
+	// split command into arugments , flags and opcode.
 	while(beginPos < command.length())	{
 		beginPos = command.find_first_not_of(" \r\n",endPos) ;
 		if(beginPos != std::string::npos){
@@ -196,6 +202,7 @@ bool parseCommand(std::string command,std::string& cmd,std::vector<std::string>&
 
 // This Function separate the command in opcode and message.
 bool parseCommand(std::string command,std::string& cmd, std::string& args){
+	// split command into argument and opcode.
 	std::string::size_type beginPos = command.find_first_not_of(" \r\n", 0);
 	std::string::size_type endPos = command.find_first_of(" \r\n",beginPos);
 	cmd = command.substr(beginPos,endPos-beginPos);
